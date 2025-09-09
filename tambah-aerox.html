@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Input Aerox</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="form-full-screen">
+    <nav class="sidebar">
+        </nav>
+    <section class="main-content">
+        <a href="dashboard-aerox.html" class="back-button"><i class='bx bx-arrow-back'></i>Kembali ke Dashboard Aerox</a>
+        <div class="form-container">
+            <h2>Form Input Pengecekan Aerox</h2>
+            <form id="addDataForm">
+                <div class="form-group">
+                    <label for="tanggal">Tanggal</label>
+                    <input type="date" id="tanggal" required>
+                </div>
+                <div class="form-group">
+                    <label for="shift">Shift</label>
+                    <select id="shift" required>
+                        <option value="1">Shift 1</option>
+                        <option value="2">Shift 2</option>
+                        <option value="3">Shift 3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="consumer">Consumer</label>
+                    <select id="consumer" required>
+                        <option value="">-- Pilih Consumer --</option>
+                        <option value="CEK FINISH GAYUH">CEK FINISH GAYUH</option>
+                        <option value="CEK FINISH RAHMATDI">CEK FINISH RAHMATDI</option>
+                        <option value="CEK FINISH GIYOTO">CEK FINISH GIYOTO</option>
+                        <option value="TOUCH UP">TOUCH UP</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="namaAerox">Nama Aerox</label>
+                    <select id="namaAerox" required>
+                        <option value="">Memuat daftar...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="qty">Kuantitas (pcs)</label>
+                    <input type="number" id="qty" placeholder="Contoh: 1" step="1" required>
+                </div>
+
+                <button type="submit" class="submit-button">Simpan Data</button>
+            </form>
+        </div>
+    </section>
+    <div id="successModal" class="modal-animated">
+        <div class="modal-animated-content">
+            <div class="success-icon-wrapper">
+                <svg class="success-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="success-icon__circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="success-icon__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            </div>
+            <h4>Berhasil!</h4>
+            <p>Data part jatuh telah disimpan.</p>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="tambah-aerox.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Data Thinner</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="form-full-screen">
+    <nav class="sidebar">
+        </nav>
+    <section class="main-content">
+        <a href="dashboard-thinner.html" class="back-button"><i class='bx bx-arrow-back'></i>Kembali ke Dashboard Thinner</a>
+        <div class="master-cat-container">
+            <div class="form-container">
+                <h3>Tambah Thinner Baru</h3>
+                <form id="addMasterForm">
+                    <div class="form-group">
+                        <label for="newName">Nama Thinner</label>
+                        <input type="text" id="newName" placeholder="Contoh: THINNER PU SLOW" required>
+                    </div>
+                    <button type="submit" class="submit-button">Simpan</button>
+                </form>
+            </div>
+            <div class="log-container">
+                <h3>Daftar Thinner Tersedia</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Thinner</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="masterTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="master-thinner.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Part Jatuh per Nama</title>
+    <link rel="stylesheet" href="main-style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="dashboard-body">
+    <nav class="sidebar">
+    <header>
+        <div class="image-text">
+            <span class="image"><i class='bx bxs-dashboard'></i></span>
+            <div class="text logo-text">
+                <span class="name">Dasbor</span>
+                <span class="profession">Paint Apps</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="menu-bar">
+        <div class="menu">
+            <ul class="menu-links">
+                <li class="nav-link dropdown">
+                    <div class="dropdown-toggle">
+                        <i class='bx bxs-paint-roll icon'></i>
+                        <span class="text nav-text">CAT</span>
+                        <i class='bx bxs-chevron-down arrow'></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="dashboard-cat.html">Dashboard</a></li>
+                        <li><a href="master-cat.html">Master Cat</a></li>
+                        <li><a href="tambah-data.html">Add Cat</a></li>
+                        <li><a href="cat-by-name-dashboard.html">Laporan Cat</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-link dropdown">
+                    <div class="dropdown-toggle">
+                        <i class='bx bxs-color-fill icon'></i>
+                        <span class="text nav-text">THINNER</span>
+                        <i class='bx bxs-chevron-down arrow'></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="dashboard-thinner.html">Dashboard</a></li>
+                        <li><a href="master-thinner.html">Master Thinner</a></li>
+                        <li><a href="tambah-thinner.html">Add Thinner</a></li>
+                        <li><a href="thinner-by-name-dashboard.html">Laporan Thinner</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-link dropdown">
+                    <div class="dropdown-toggle">
+                        <i class='bx bxs-car-mechanic icon'></i>
+                        <span class="text nav-text">AEROX</span>
+                        <i class='bx bxs-chevron-down arrow'></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="dashboard-aerox.html">Dashboard</a></li>
+                        <li><a href="master-aerox.html">Master Aerox</a></li>
+                        <li><a href="tambah-aerox.html">Add Aerox</a></li>
+                        <li><a href="aerox-by-name-dashboard.html">Laporan Aerox</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-link dropdown">
+                    <div class="dropdown-toggle">
+                        <i class='bx bxs-wrench icon'></i>
+                        <span class="text nav-text">PART JATUH</span>
+                        <i class='bx bxs-chevron-down arrow'></i>
+                    </div>
+                    <ul class="submenu">
+                        <li><a href="dashboard-part-jatuh.html">Dashboard</a></li>
+                        <li><a href="master-part.html">Master Part</a></li>
+                        <li><a href="tambah-part.html">Add Part</a></li>
+                        <li><a href="part-by-name-dashboard.html">Laporan</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="bottom-content">
+            <li class="logout">
+                <a href="index.html">
+                    <i class='bx bx-log-out icon'></i>
+                    <span class="text nav-text">Logout</span>
+                </a>
+            </li>
+        </div>
+    </div>
+    </nav>
+    <section class="main-content">
+        <i class='bx bx-menu' id="sidebar-toggle"></i>
+        <div class="header-content">
+            <h1>Laporan Peringkat Part Jatuh</h1>
+            <div class="filter-wrapper">
+                <label for="monthFilter">Tampilkan Data Bulan:</label>
+                <select id="monthFilter"></select>
+            </div>
+        </div>
+        <div class="chart-container">
+            <div class="chart-header">
+                <h4 id="chartTitle"></h4>
+                <button id="downloadChartButton" class="action-button"><i class='bx bxs-download'></i> Download Gambar</button>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="rankingChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="sidebar.js"></script>
+    <script src="part-by-name-dashboard.js"></script>
+</body>
+</html>

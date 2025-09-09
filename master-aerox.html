@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Data Cat</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="form-full-screen">
+    <nav class="sidebar">
+        </nav>
+    <section class="main-content">
+        <a href="dashboard-aerox.html" class="back-button"><i class='bx bx-arrow-back'></i>Kembali ke Dashboard Aerox</a>
+        <div class="master-cat-container">
+            <div class="form-container">
+                <h3>Tambah Master Aerox Baru</h3>
+                <form id="addMasterForm">
+                    <div class="form-group">
+                        <label for="newName">Nama Master</label>
+                        <input type="text" id="newName" placeholder="Contoh: PART BARU" required>
+                    </div>
+                    <button type="submit" class="submit-button">Simpan</button>
+                </form>
+            </div>
+            <div class="log-container">
+                <h3>Daftar Master Aerox</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Nama Master</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="masterTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="master-aerox.js"></script>
+</body>
+</html>

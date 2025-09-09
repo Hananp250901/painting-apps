@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Data Cat</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="form-full-screen">
+
+    <nav class="sidebar">
+        <header>
+            <div class="image-text">
+                <span class="image"><i class='bx bxs-dashboard'></i></span>
+                <div class="text logo-text">
+                    <span class="name">Dasbor</span>
+                    <span class="profession">Admin Panel</span>
+                </div>
+            </div>
+        </header>
+        <div class="menu-bar">
+            <div class="menu">
+                <ul class="menu-links">
+                    <li class="nav-link"> 
+                        <a href="dashboard-cat.html"><i class='bx bxs-paint-roll icon'></i><span class="text nav-text">CAT</span></a>
+                    </li>
+                    <li class="nav-link"> 
+                        <a href="tambah-data.html"><i class='bx bxs-file-plus icon'></i><span class="text nav-text">Tambah Pemakaian</span></a>
+                    </li>
+                    <li class="nav-link active">
+                        <a href="master-cat.html"><i class='bx bxs-data icon'></i><span class="text nav-text">Kelola Master Cat</span></a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="#"><i class='bx bxs-color-fill icon'></i><span class="text nav-text">THINNER</span></a>
+                    </li>
+                </ul>
+            </div>
+            <div class="bottom-content">
+                <li class="logout">
+                    <a href="index.html"><i class='bx bx-log-out icon'></i><span class="text nav-text">Logout</span></a>
+                </li>
+            </div>
+        </div>
+    </nav>
+
+    <section class="main-content">
+        <a href="dashboard-cat.html" class="back-button"><i class='bx bx-arrow-back'></i>Kembali ke Dashboard</a>
+        
+        <div class="master-cat-container">
+            <div class="form-container">
+                <h3>Tambah Cat Baru</h3>
+                <form id="addMasterCatForm">
+                    <div class="form-group">
+                        <label for="newCatName">Nama Cat</label>
+                        <input type="text" id="newCatName" placeholder="Contoh: BLUE VIOLET MET" required>
+                    </div>
+                    <button type="submit" class="submit-button">Simpan</button>
+                </form>
+            </div>
+
+            <div class="log-container">
+                <h3>Daftar Cat Tersedia</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Cat</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="masterCatTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="master-cat.js"></script>
+</body>
+</html>

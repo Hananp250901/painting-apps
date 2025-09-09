@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #72EDF2 0%, #5151E5 100%);
+    overflow: hidden; /* Mencegah scroll saat modal aktif */
+}
+.login-container {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    text-align: center;
+    color: #fff;
+    position: relative; /* Penting untuk z-index */
+    z-index: 10; /* Pastikan di atas background tapi di bawah modal */
+}
+h1 {
+    margin-bottom: 25px;
+}
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+button:hover {
+    background-color: #0056b3;
+}
+.rainbow-active {
+    background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet, red);
+    background-size: 200% auto;
+    animation: rainbow-flow 1.5s linear infinite; /* Tambahkan infinite agar terus bergerak */
+}
+@keyframes rainbow-flow {
+    0% { background-position: 0% center; }
+    100% { background-position: -200% center; }
+}
+.error-message {
+    color: #ff4d4d;
+    margin-top: 15px;
+    height: 20px;
+}
+
+/* --- MODAL SUKSES --- */
+.modal-animated {
+    position: fixed; /* Posisi relatif terhadap viewport */
+    z-index: 1000; /* Pastikan di atas semua elemen lain */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Overlay gelap */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-animated.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-animated-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    width: 300px;
+    max-width: 90%; /* Responsif */
+    transform: scale(0.7); /* Animasi muncul */
+    transition: transform 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-animated.show .modal-animated-content {
+    transform: scale(1);
+}
+
+.modal-animated-content h4 {
+    color: #4CAF50; /* Warna hijau untuk sukses */
+    font-size: 22px;
+    margin: 15px 0 5px 0;
+}
+
+.modal-animated-content p {
+    color: #666;
+    margin: 0;
+}
+
+.success-icon-wrapper {
+    margin: 0 auto;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #e6ffe6; /* Background ikon */
+}
+
+.success-icon {
+    width: 40px;
+    height: 40px;
+    display: block;
+    stroke-width: 3;
+    stroke: #5cb85c; /* Warna ikon centang */
+    fill: none; /* Penting agar ikon tidak terisi */
+}
+
+/* Animasi centang */
+.success-icon__circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke-miterlimit: 10;
+    stroke: #5cb85c;
+    fill: none;
+    animation: success-stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.success-icon__check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: success-stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes success-stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Data Part Jatuh</title>
+    <link rel="stylesheet" href="main-style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="form-full-screen">
+    <nav class="sidebar">
+        </nav>
+    <section class="main-content">
+        <a href="dashboard-part-jatuh.html" class="back-button"><i class='bx bx-arrow-back'></i>Kembali ke Dashboard</a>
+        <div class="master-cat-container">
+            <div class="form-container">
+                <h3>Tambah Master Part Baru</h3>
+                <form id="addMasterForm">
+                    <div class="form-group">
+                        <label for="partNumber">Part Number</label>
+                        <input type="text" id="partNumber" placeholder="Contoh: 20101-005C36-2P" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="namaPart">Nama Part</label>
+                        <input type="text" id="namaPart" placeholder="Contoh: BODY M/C FR K56F" required>
+                    </div>
+                    <button type="submit" class="submit-button">Simpan</button>
+                </form>
+            </div>
+            <div class="log-container">
+                <h3>Daftar Master Part</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Part Number</th>
+                                <th>Nama Part</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="masterTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="master-part.js"></script>
+</body>
+</html>
