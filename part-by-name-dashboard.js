@@ -118,7 +118,7 @@ function renderSortedChart(labels, data) {
             indexAxis: 'y',
             layout: { padding: { left: 40, right: 40 } },
             plugins: {
-                title: { display: true, text: `Peringkat Pemakaian Thinner - ${monthText}`, font: { size: 18 } },
+                title: { display: true, text: `Peringkat Part Gagal Proses - ${monthText}`, font: { size: 18 } },
                 legend: { display: false },
                 datalabels: {
                     anchor: 'end',
