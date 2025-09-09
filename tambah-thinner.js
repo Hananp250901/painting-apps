@@ -58,3 +58,32 @@ addDataForm.addEventListener('submit', async (e) => {
         alert("Terjadi kesalahan saat menyimpan data.");
     }
 });
+async function populateThinnerDropdown() {
+    try {
+        const { data, error } = await supabase
+            .from('master_thinner')
+            .select('nama')
+            .order('nama');
+        if (error) throw error;
+
+        thinnerSelect.innerHTML = '<option value="">-- Pilih Nama Thinner --</option>';
+        data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.nama;
+            option.textContent = item.nama;
+            thinnerSelect.appendChild(option);
+        });
+
+        // Aktifkan Select2 setelah option sudah ada
+        $(document).ready(function () {
+            $('#namaThinner').select2({
+                placeholder: "-- Pilih Nama Thinner --",
+                allowClear: true,
+                width: 'resolve'
+            });
+        });
+
+    } catch (error) {
+        console.error("Error mengambil data master thinner:", error);
+    }
+}
