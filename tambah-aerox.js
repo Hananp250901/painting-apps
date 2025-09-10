@@ -46,7 +46,7 @@ addDataForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const newData = {
         tanggal: tanggalInput.value,
-        shift: Text(document.getElementById('shift').value),
+        shift: document.getElementById('shift').value,
         namaAerox: choices.getValue(true), // Ambil nilai dari Choices.js
         consumer: document.getElementById('consumer').value,
     };

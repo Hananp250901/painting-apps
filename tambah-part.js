@@ -15,6 +15,7 @@ const choices = new Choices(partSelectEl, {
     itemSelectText: 'Pilih',
     placeholder: true,
     placeholderValue: 'Ketik untuk mencari part...',
+    searchResultLimit: 10
 });
 
 document.addEventListener('DOMContentLoaded', () => {
