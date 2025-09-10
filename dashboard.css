@@ -336,3 +336,40 @@ body.form-full-screen .form-container {
     .search-and-actions .action-button { width: 100%; justify-content: center; }
     .master-cat-container { grid-template-columns: 1fr; }
 }
+
+/* Perbaikan untuk Tampilan Choices.js */
+
+/* 1. Memperbaiki lebar dropdown agar tidak terlalu sempit */
+.choices__list--dropdown,
+.choices__list[aria-expanded] {
+    min-width: 350px; /* Atur lebar minimal dropdown agar cukup */
+    word-break: normal; /* Pastikan pemotongan kata normal */
+}
+
+/* 2. Mencegah teks di dalam setiap pilihan agar tidak terpotong ke bawah */
+.choices__item--choice {
+    white-space: nowrap; /* Paksa teks untuk tetap dalam satu baris */
+}
+
+/* --- FILTER INPUT DALAM HEADER TABEL --- */
+.table-filter-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: #fafafa;
+    transition: all 0.2s ease;
+}
+
+.table-filter-input:focus {
+    background-color: #fff;
+    border-color: var(--blue-primary);
+    box-shadow: 0 0 0 2px rgba(102, 166, 255, 0.15);
+    outline: none;
+}
+
+.table-filter-input::placeholder {
+    color: #999;
+    font-size: 12px;
+}

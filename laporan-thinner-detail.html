@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Aerox</title>
-    <link rel="stylesheet" href="main-style.css">
+    <title>Laporan Cat per Item</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
-<body class="dashboard-body">
+<body>
+
     <nav class="sidebar">
     <header>
         <div class="image-text">
@@ -92,30 +95,73 @@
         </div>
     </div>
     </nav>
+
     <section class="main-content">
-        <i class='bx bx-menu' id="sidebar-toggle"></i>
         <div class="header-content">
-            <h1>Laporan Pemakaian Aerox</h1>
+            <h1>Laporan Pemakaian Thinner per Item</h1>
             <div class="filter-wrapper">
-                <label for="monthFilter">Tampilkan Data Bulan:</label>
+                <label for="monthFilter">Bulan:</label>
                 <select id="monthFilter"></select>
             </div>
+             <div class="filter-wrapper">
+                <label for="thinnerNameFilter">Pilih Nama Thinner:</label>
+                <select id="thinnerNameFilter"></select>
+            </div>
+            <a href="tambah-thinner.html" class="action-button">
+                <i class='bx bx-plus'></i>
+                Tambah Pemakaian Thinner
+            </a>
         </div>
+
         <div class="chart-container">
             <div class="chart-header">
-                <h4 id="chartTitle"></h4>
-                <button id="downloadChartButton" class="action-button"><i class='bx bxs-download'></i> Download Gambar</button>
+                <h4 id="chartTitle">Analisis Pemakaian Thinner</h4>
+                <button id="downloadChartButton" class="action-button"><i class='bx bx-download'></i>Download Gambar</button>
             </div>
             <div class="chart-wrapper">
-                <canvas id="usageChartByName"></canvas>
+                <canvas id="usageChart"></canvas>
+            </div>
+        </div>
+        <div class="log-container">
+            <div class="log-header">
+                <h3><i class='bx bx-history'></i> Log Input Terakhir</h3>
+                 <button id="downloadCsvButton" class="action-button"><i class='bx bx-download'></i>Download CSV</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Shift</th>
+                            <th>Nama Thinner</th>
+                            <th>Qty (Liter)</th>
+                        </tr>
+                        <!-- <tr>
+                            <th><input type="date" id="filterTanggal" class="filter-input"></th>
+                            <th><input type="number" id="filterShift" class="filter-input" placeholder="Filter shift..."></th>
+                            <th><input type="text" id="filterNama" class="filter-input" placeholder="Filter nama..."></th>
+                            <th><input type="number" id="filterQty" class="filter-input" placeholder="Filter qty..."></th>
+                        </tr> -->
+                    </thead>
+                    <tbody id="logTableBody"></tbody>
+                </table>
+            </div>
+             <div class="pagination-controls">
+                <button id="togglePaginationButton" class="page-button">Tampilkan Semua</button>
+                <button id="prevPageButton" class="page-button" disabled>&laquo; Sebelumnya</button>
+                <span id="pageInfo">Halaman 1 dari 1</span>
+                <button id="nextPageButton" class="page-button" disabled>Berikutnya &raquo;</button>
             </div>
         </div>
     </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    
+    <script src="laporan-thinner-detail.js"></script>
     <script src="sidebar.js"></script>
-    <script src="aerox-by-name-dashboard.js"></script>
+
 </body>
 </html>

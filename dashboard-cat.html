@@ -34,6 +34,7 @@
                         <li><a href="master-cat.html">Master Cat</a></li>
                         <li><a href="tambah-data.html">Add Cat</a></li>
                         <li><a href="cat-by-name-dashboard.html">Laporan Cat</a></li>
+                        <li><a href="laporan-cat-detail.html">Laporan Harian</a></li>
                     </ul>
                 </li>
 
@@ -48,6 +49,7 @@
                         <li><a href="master-thinner.html">Master Thinner</a></li>
                         <li><a href="tambah-thinner.html">Add Thinner</a></li>
                         <li><a href="thinner-by-name-dashboard.html">Laporan Thinner</a></li>
+                        <li><a href="laporan-thinner-detail.html">Laporan Harian</a></li>
                     </ul>
                 </li>
 
@@ -120,10 +122,6 @@
             <div class="log-header">
                 <h3><i class='bx bx-history'></i> Log Input Terakhir</h3>
                 <div class="search-and-actions">
-                    <div class="search-wrapper">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="logSearchInput" placeholder="Cari berdasarkan nama cat...">
-                    </div>
                     <button id="downloadCsvButton" class="action-button">
                         <i class='bx bx-download'></i>
                         Download CSV
@@ -131,24 +129,30 @@
                 </div>
             </div>
             <div class="table-wrapper">
-                <table>
-                    <thead>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Shift</th>
+                        <th>Nama Cat</th>
+                        <th>Qty (Liter)</th>
+                    </tr>
                         <tr>
-                            <th>Tanggal</th>
-                            <th>Shift</th>
-                            <th>Nama Cat</th>
-                            <th>Qty (Liter)</th>
+                            <th><input type="text" placeholder="Filter tanggal..." data-filter="tanggal" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter shift..." data-filter="shift" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter nama..." id="logSearchInput" data-filter="nama" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter qty..." data-filter="qty" class="table-filter-input"></th>
                         </tr>
-                    </thead>
-                    <tbody id="logTableBody"></tbody>
-                </table>
+                </thead>
+                <tbody id="logTableBody"></tbody>
+            </table>
             </div>
             <div class="pagination-controls">
-        <button id="togglePaginationButton" class="page-button">Tampilkan Semua</button>
-        <button id="prevPageButton" class="page-button" disabled>&laquo; Sebelumnya</button>
-        <span id="pageInfo">Halaman 1 dari 1</span>
-        <button id="nextPageButton" class="page-button" disabled>Berikutnya &raquo;</button>
-    </div>
+                <button id="togglePaginationButton" class="page-button">Tampilkan Semua</button>
+                <button id="prevPageButton" class="page-button" disabled>&laquo; Sebelumnya</button>
+                <span id="pageInfo">Halaman 1 dari 1</span>
+                <button id="nextPageButton" class="page-button" disabled>Berikutnya &raquo;</button>
+            </div>
         </div>
     </section>
 

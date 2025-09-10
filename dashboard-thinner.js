@@ -8,67 +8,77 @@ let fullLogData = [];
 let currentPage = 1;
 const rowsPerPage = 20;
 let showAll = false;
+let myThinnerChart = null; // Variabel khusus untuk chart thinner
 
-// Event Listeners
+// Daftarkan plugin sekali di awal
+Chart.register(ChartDataLabels);
+
+// --- Event Listeners ---
+// Didaftarkan setelah halaman selesai dimuat untuk keamanan
 document.addEventListener('DOMContentLoaded', initializeDashboard);
-document.getElementById('monthFilter').addEventListener('change', () => {
-    showAll = false; currentPage = 1; loadDashboardData();
-});
-document.getElementById('downloadChartButton').addEventListener('click', downloadChartImage);
-document.getElementById('logSearchInput').addEventListener('keyup', handleSearch);
-document.getElementById('downloadCsvButton').addEventListener('click', exportToCSV);
-document.getElementById('prevPageButton').addEventListener('click', () => {
-    if (currentPage > 1) { currentPage--; displayLogPage(); }
-});
-document.getElementById('nextPageButton').addEventListener('click', () => {
-    if (currentPage < Math.ceil(getFilteredData().length / rowsPerPage)) { currentPage++; displayLogPage(); }
-});
-document.getElementById('togglePaginationButton').addEventListener('click', () => {
-    showAll = !showAll;
-    const button = document.getElementById('togglePaginationButton');
-    const controls = document.querySelector('.pagination-controls');
-    if (showAll) {
-        button.textContent = "Tampilkan Halaman";
-        controls.classList.add('hidden');
-    } else {
-        button.textContent = "Tampilkan Semua";
-        controls.classList.remove('hidden');
+document.querySelectorAll('input[data-filter]').forEach(input => {
+    input.addEventListener('keyup', () => {
         currentPage = 1;
-    }
-    displayLogPage();
+        displayLogPage();
+    });
 });
 
-// Fungsi Utama
+
 async function initializeDashboard() {
+    // Pastikan semua elemen ada sebelum menambahkan listener
+    document.getElementById('monthFilter')?.addEventListener('change', () => {
+        showAll = false; currentPage = 1; loadDashboardData();
+    });
+    document.getElementById('downloadChartButton')?.addEventListener('click', downloadChartImage);
+    document.getElementById('logSearchInput')?.addEventListener('keyup', handleSearch);
+    document.getElementById('downloadCsvButton')?.addEventListener('click', exportToCSV);
+    document.getElementById('prevPageButton')?.addEventListener('click', () => {
+        if (currentPage > 1) { currentPage--; displayLogPage(); }
+    });
+    document.getElementById('nextPageButton')?.addEventListener('click', () => {
+        if (currentPage < Math.ceil(getFilteredData().length / rowsPerPage)) { currentPage++; displayLogPage(); }
+    });
+    document.getElementById('togglePaginationButton')?.addEventListener('click', () => {
+        showAll = !showAll;
+        const button = document.getElementById('togglePaginationButton');
+        const controls = document.querySelector('.pagination-controls');
+        if (showAll) {
+            button.textContent = "Tampilkan Halaman";
+            controls.classList.add('hidden');
+        } else {
+            button.textContent = "Tampilkan Semua";
+            controls.classList.remove('hidden');
+            currentPage = 1;
+        }
+        displayLogPage();
+    });
+    
+    // Inisialisasi data
     await populateMonthFilter();
     await loadDashboardData();
 }
+
 function handleSearch() {
-    currentPage = 1; displayLogPage();
+    currentPage = 1; 
+    displayLogPage();
 }
+
 async function populateMonthFilter() {
     const monthFilter = document.getElementById('monthFilter');
-    
-    // Panggil fungsi 'rpc' untuk bypass cache potensial
+    if (!monthFilter) return;
+
+    // Pastikan Anda sudah membuat fungsi RPC 'get_distinct_months_thinner' di Supabase
     const { data, error } = await supabase.rpc('get_distinct_months_thinner');
 
     if (error || !data || data.length === 0) {
-        console.error("Gagal mengambil bulan unik:", error);
+        console.error("Gagal mengambil bulan unik untuk thinner:", error);
         monthFilter.innerHTML = '<option value="">Tidak ada data</option>';
         return;
     }
-
-    const availableMonths = new Set();
-    data.forEach(item => {
-        // Data dari rpc sudah dalam format yang kita inginkan
-        const monthKey = `${item.tahun}-${item.bulan}`;
-        availableMonths.add(monthKey);
-    });
-
+    const availableMonths = new Set(data.map(item => `${item.tahun}-${item.bulan}`));
     monthFilter.innerHTML = '';
     const now = new Date();
     const currentMonthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
-    
     const sortedMonths = Array.from(availableMonths).sort((a, b) => new Date(b.split('-')[0], b.split('-')[1]-1) - new Date(a.split('-')[0], a.split('-')[1]-1));
     
     sortedMonths.forEach(monthKey => {
@@ -77,97 +87,130 @@ async function populateMonthFilter() {
         const option = document.createElement('option');
         option.value = monthKey;
         option.textContent = date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        if (monthKey === currentMonthKey) {
-            option.selected = true;
-        }
         monthFilter.appendChild(option);
     });
 
-    if (!availableMonths.has(currentMonthKey)) {
-        const option = document.createElement('option');
-        option.value = currentMonthKey;
-        option.textContent = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        option.selected = true;
-        monthFilter.prepend(option);
+    if (monthFilter.querySelector(`option[value="${currentMonthKey}"]`)) {
+        monthFilter.value = currentMonthKey;
     }
 }
+
 async function loadDashboardData() {
-    
-    const selectedMonth = document.getElementById('monthFilter').value;
+    const selectedMonth = document.getElementById('monthFilter')?.value;
     if (!selectedMonth) return;
+
     const [year, month] = selectedMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+    
+    // Mengambil data dari tabel pemakaian_thinner
     const { data, error } = await supabase.from('pemakaian_thinner').select('*').gte('tanggal', startDate).lte('tanggal', endDate).order('tanggal', { ascending: true });
-    if (error) { console.error("Gagal memuat data:", error); return; }
-    fullLogData = data;
+    
+    if (error) { console.error("Gagal memuat data thinner:", error); return; }
+    
+    fullLogData = data || [];
     displayLogPage();
-    const ctx = document.getElementById('catUsageChart').getContext('2d');
-    if (window.myCatChart) window.myCatChart.destroy();
-    if (data.length === 0) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.font = "16px Poppins"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
-        ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
-        return;
-    }
-    const dailyUsage = new Map();
-    data.forEach(item => {
-        dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty);
-    });
-    const labels = [], dailyData = [];
-    const sorted = new Map([...dailyUsage.entries()].sort());
-    sorted.forEach((totalQty, dateKey) => {
-        labels.push(new Date(dateKey).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-        dailyData.push(totalQty);
-    });
-    renderChart(labels, dailyData);
+    renderChart(fullLogData); // Mengirim semua data ke fungsi renderChart
 }
+
 function getFilteredData() {
-    const filter = document.getElementById('logSearchInput').value.toUpperCase();
-    return !filter ? fullLogData : fullLogData.filter(item => item.namaThinner.toUpperCase().includes(filter));
+    const nameFilter = document.getElementById('logSearchInput').value.toUpperCase();
+    const shiftFilter = document.querySelector('input[data-filter="shift"]')?.value.trim();
+    const qtyFilter = document.querySelector('input[data-filter="qty"]')?.value.trim();
+    const dateFilter = document.querySelector('input[data-filter="tanggal"]')?.value.trim();
+
+    return fullLogData.filter(item => {
+        const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { 
+            day: '2-digit', month: 'short', year: 'numeric' 
+        });
+
+        const matchName = !nameFilter || item.namaCat.toUpperCase().includes(nameFilter);
+        const matchShift = !shiftFilter || String(item.shift) === shiftFilter;
+        const matchQty = !qtyFilter || String(item.qty) === qtyFilter;
+        const matchDate = !dateFilter || formattedTanggal.toLowerCase().includes(dateFilter.toLowerCase());
+
+        return matchName && matchShift && matchQty && matchDate;
+    });
 }
+
 function displayLogPage() {
     const tableBody = document.getElementById('logTableBody');
+    if (!tableBody) return;
+
     const filtered = getFilteredData();
     filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || a.shift - b.shift);
-    let dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+    const dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+    
     let html = '';
     dataToDisplay.forEach(item => {
-        const t = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        const t = new Date(item.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         html += `<tr><td>${t}</td><td>${item.shift}</td><td>${item.namaThinner}</td><td>${item.qty}</td></tr>`;
     });
     tableBody.innerHTML = html || '<tr><td colspan="4">Tidak ada data yang cocok.</td></tr>';
+    
     const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
     document.getElementById('pageInfo').textContent = showAll ? `${filtered.length} Item` : `Halaman ${currentPage} dari ${totalPages}`;
     document.getElementById('prevPageButton').disabled = currentPage === 1;
     document.getElementById('nextPageButton').disabled = currentPage >= totalPages;
 }
-function renderChart(labels, data) {
+
+function renderChart(data) {
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    const ctx = document.getElementById('catUsageChart').getContext('2d');
-    window.myCatChart = new Chart(ctx, {
+    const chartTitleElement = document.getElementById('chartTitle');
+    if (chartTitleElement) {
+        chartTitleElement.textContent = `Analisis Pemakaian Thinner - ${monthText}`;
+    }
+
+    // Menggunakan ID yang benar dari HTML: 'catUsageChart'
+    const ctx = document.getElementById('catUsageChart')?.getContext('2d');
+    if (!ctx) return; // Keluar jika canvas tidak ditemukan
+
+    if (myThinnerChart) {
+        myThinnerChart.destroy();
+    }
+
+    if (!data || data.length === 0) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.font = "16px Poppins"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
+        ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+
+    const dailyUsage = new Map();
+    data.forEach(item => {
+        dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty);
+    });
+
+    const labels = [], dailyData = [];
+    const sorted = new Map([...dailyUsage.entries()].sort());
+    sorted.forEach((totalQty, dateKey) => {
+        labels.push(new Date(dateKey + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+        dailyData.push(totalQty);
+    });
+
+    myThinnerChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels,
             datasets: [
-                { label: 'Total (Bar)', data, backgroundColor: 'rgba(37, 117, 252, 0.7)', order: 1 },
-                { label: 'Total (Garis)', data, type: 'line', borderColor: '#FFA500', tension: 0.3, order: 0, datalabels: { display: false } }
+                { label: 'Total (Bar)', data: dailyData, backgroundColor: 'rgba(37, 117, 252, 0.7)', order: 1 },
+                { label: 'Total (Garis)', data: dailyData, type: 'line', borderColor: '#FFA500', tension: 0.3, order: 0, datalabels: { display: false } }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
-                title: { display: true, text: `Analisis Pemakaian Thinner - ${monthText}`, font: { size: 18 } },
+                title: { display: false }, // Judul sudah ada di H4
                 datalabels: {
                     anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v + ' L' : '',
                     color: '#333', font: { weight: 'bold' }
                 }
             },
             scales: { y: { beginAtZero: true, title: { display: true, text: 'Total Kuantitas (Liter)' } } }
-        },
-        plugins: [ChartDataLabels]
+        }
     });
 }
+
 function exportToCSV() {
     const data = getFilteredData();
     let csv = "Tanggal,Shift,Nama Thinner,Qty (Liter)\r\n";
@@ -181,33 +224,26 @@ function exportToCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
 }
+
 function downloadChartImage() {
     const canvas = document.getElementById('catUsageChart');
-    if (!canvas) {
-        console.error('Elemen canvas dengan ID "catUsageChart" tidak ditemukan!');
-        return;
-    }
+    if (!canvas) return;
 
-    // Buat canvas virtual dengan latar belakang putih
     const newCanvas = document.createElement('canvas');
-    const newCtx = newCanvas.getContext('2d');
     newCanvas.width = canvas.width;
     newCanvas.height = canvas.height;
-
-    newCtx.fillStyle = '#FFFFFF'; // Latar belakang putih
-    newCtx.fillRect(0, 0, newCanvas.width, newCtx.canvas.height);
+    const newCtx = newCanvas.getContext('2d');
+    
+    newCtx.fillStyle = '#FFFFFF';
+    newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
     newCtx.drawImage(canvas, 0, 0);
 
-    // Trigger download
     const link = document.createElement('a');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    const fileName = `Analisis_Pemakaian_Thinner_${monthText.replace(/ /g, "_")}.png`;
-
     link.href = newCanvas.toDataURL('image/png');
-    link.download = fileName;
-
+    link.download = `Grafik_Pemakaian_Thinner_${monthText.replace(/ /g, "_")}.png`;
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
