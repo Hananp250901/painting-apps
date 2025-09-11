@@ -64,6 +64,7 @@
                         <li><a href="master-aerox.html">Master Aerox</a></li>
                         <li><a href="tambah-aerox.html">Add Aerox</a></li>
                         <li><a href="aerox-by-name-dashboard.html">Laporan Aerox</a></li>
+                        <li><a href="laporan-aerox-detail.html">Laporan Harian</a></li>
                     </ul>
                 </li>
                 
@@ -78,6 +79,7 @@
                         <li><a href="master-part.html">Master Part</a></li>
                         <li><a href="tambah-part.html">Add Part</a></li>
                         <li><a href="part-by-name-dashboard.html">Laporan</a></li>
+                        <li><a href="laporan-part-jatuh-detail.html">Laporan Harian</a></li>
                     </ul>
                 </li>
             </ul>
@@ -122,10 +124,6 @@
             <div class="log-header">
                 <h3><i class='bx bx-history'></i> Log Input Terakhir</h3>
                 <div class="search-and-actions">
-                    <div class="search-wrapper">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="logSearchInput" placeholder="Cari berdasarkan nama aerox...">
-                    </div>
                     <button id="downloadCsvButton" class="action-button">
                         <i class='bx bx-download'></i>
                         Download CSV
@@ -140,7 +138,14 @@
                             <th>Shift</th>
                             <th>Consumer</th>
                             <th>Nama Aerox</th>
-                            <th>Qty (Liter)</th>
+                            <th>Qty (Pcs)</th>
+                        </tr>
+                        <tr>
+                            <th><input type="text" placeholder="Filter tanggal..." data-filter="tanggal" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter shift..." data-filter="shift" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter consumer..." data-filter="consumer" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter nama..." id="logSearchInput" data-filter="nama" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter qty..." data-filter="qty" class="table-filter-input"></th>
                         </tr>
                     </thead>
                     <tbody id="logTableBody"></tbody>

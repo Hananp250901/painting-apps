@@ -49,6 +49,7 @@ addDataForm.addEventListener('submit', async (e) => {
         shift: document.getElementById('shift').value,
         namaAerox: choices.getValue(true), // Ambil nilai dari Choices.js
         consumer: document.getElementById('consumer').value,
+        qty: document.getElementById('qty').value,
     };
 
     if (!newData.namaAerox || !newData.consumer) {
@@ -66,10 +67,11 @@ addDataForm.addEventListener('submit', async (e) => {
         // Hanya kosongkan isian yang perlu diubah
         choices.clearInput();
         choices.setChoiceByValue('');
-        document.getElementById('consumer').value = '';
+        // document.getElementById('consumer').value = '';
+        document.getElementById('qty').value= ' ';
         
         // Fokuskan kembali ke input nama Aerox
-        choices.showDropdown();
+        // choices.showDropdown();
         
         setTimeout(() => successModal.classList.remove('show'), 2000);
 

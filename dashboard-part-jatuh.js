@@ -11,6 +11,15 @@ const rowsPerPage = 20;
 let showAll = false;
 let currentChart = null;
 
+
+document.querySelectorAll('input[data-filter]').forEach(input => {
+    input.addEventListener('keyup', () => {
+        currentPage = 1;
+        displayLogPage();
+    });
+});
+
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeDashboard();
     
@@ -183,12 +192,25 @@ async function loadDashboardData() {
 }
 
 function getFilteredData() {
-    const searchFilter = document.getElementById('logSearchInput').value.toUpperCase();
-    if (!searchFilter) return fullLogData;
-    return fullLogData.filter(item => 
-        (item.namaPart || '').toString().toUpperCase().includes(searchFilter) ||
-        (item.part_number && item.part_number.toString().toUpperCase().includes(searchFilter))
-    );
+    const nameFilter = document.getElementById('logSearchInput').value.toUpperCase();
+    const shiftFilter = document.querySelector('input[data-filter="shift"]')?.value.trim();
+    const part_numberFilter = document.querySelector('input[data-filter="part_number"]')?.value.trim();
+    const qtyFilter = document.querySelector('input[data-filter="qty"]')?.value.trim();
+    const dateFilter = document.querySelector('input[data-filter="tanggal"]')?.value.trim();
+
+    return fullLogData.filter(item => {
+        const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { 
+            day: '2-digit', month: 'short', year: 'numeric' 
+        });
+
+        const matchName = !nameFilter || item.namaCat.toUpperCase().includes(nameFilter);
+        const matchShift = !shiftFilter || String(item.shift) === shiftFilter;
+        const matchPart_number = !part_numberFilter || item.part_number.toUpperCase().includes(part_numberFilter);
+        const matchQty = !qtyFilter || String(item.qty) === qtyFilter;
+        const matchDate = !dateFilter || formattedTanggal.toLowerCase().includes(dateFilter.toLowerCase());
+
+        return matchName && matchShift && matchPart_number && matchQty && matchDate;
+    });
 }
 
 function displayLogPage() {

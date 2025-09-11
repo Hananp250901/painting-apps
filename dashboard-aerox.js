@@ -2,6 +2,7 @@
 const SUPABASE_URL = 'https://fbfvhcwisvlyodwvmpqg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiZnZoY3dpc3ZseW9kd3ZtcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MTQ2MzQsImV4cCI6MjA3MjM5MDYzNH0.mbn9B1xEr_8kmC2LOP5Jv5O7AEIK7Fa1gxrqJ91WNx4';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 Chart.register(ChartDataLabels);
 let fullLogData = [];
 let currentPage = 1;
@@ -9,44 +10,62 @@ const rowsPerPage = 20;
 let showAll = false;
 
 
+
 document.addEventListener('DOMContentLoaded', initializeDashboard);
-document.getElementById('monthFilter').addEventListener('change', () => {
-    currentPage = 1;
-    loadDashboardData();
-});
-document.getElementById('downloadChartButton').addEventListener('click', downloadChartImage);
-document.getElementById('logSearchInput').addEventListener('keyup', handleSearch);
-document.getElementById('downloadCsvButton').addEventListener('click', exportToCSV);
-document.getElementById('prevPageButton').addEventListener('click', () => {
-    if (currentPage > 1) { currentPage--; displayLogPage(); }
-});
-document.getElementById('nextPageButton').addEventListener('click', () => {
-    if (currentPage < Math.ceil(getFilteredData().length / rowsPerPage)) { currentPage++; displayLogPage(); }
-});
-document.getElementById('togglePaginationButton').addEventListener('click', () => {
-    showAll = !showAll;
-    const button = document.getElementById('togglePaginationButton');
-    const controls = document.querySelector('.pagination-controls');
-    if (showAll) {
-        button.textContent = "Tampilkan Halaman";
-        controls.classList.add('hidden');
-    } else {
-        button.textContent = "Tampilkan Semua";
-        controls.classList.remove('hidden');
+document.querySelectorAll('input[data-filter]').forEach(input => {
+    input.addEventListener('keyup', () => {
         currentPage = 1;
-    }
-    displayLogPage();
+        displayLogPage();
+    });
 });
 
 async function initializeDashboard() {
+    // Fungsi ini hanya akan berjalan di halaman yang memiliki elemen-elemen ini.
+    // Jika tidak ada, fungsi akan berhenti tanpa error.
+    const monthFilter = document.getElementById('monthFilter');
+    if (!monthFilter) return; 
+
+    // Daftarkan semua event listener di sini dengan aman
+    monthFilter.addEventListener('change', () => {
+        showAll = false; 
+        currentPage = 1; 
+        loadDashboardData();
+    });
+
+    document.getElementById('logSearchInput')?.addEventListener('keyup', handleSearch);
+    document.getElementById('downloadCsvButton')?.addEventListener('click', exportToCSV);
+    document.getElementById('downloadChartButton')?.addEventListener('click', downloadChartImage);
+    document.getElementById('prevPageButton')?.addEventListener('click', () => {
+        if (currentPage > 1) { currentPage--; displayLogPage(); }
+    });
+    document.getElementById('nextPageButton')?.addEventListener('click', () => {
+        const totalPages = Math.ceil(getFilteredData().length / rowsPerPage) || 1;
+        if (currentPage < totalPages) { currentPage++; displayLogPage(); }
+    });
+    document.getElementById('togglePaginationButton')?.addEventListener('click', () => {
+        showAll = !showAll;
+        const button = document.getElementById('togglePaginationButton');
+        const paginationControls = document.querySelector('.pagination-controls');
+        if (showAll) {
+            button.textContent = "Tampilkan Halaman";
+            paginationControls.classList.add('hidden');
+        } else {
+            button.textContent = "Tampilkan Semua";
+            paginationControls.classList.remove('hidden');
+            currentPage = 1;
+        }
+        displayLogPage();
+    });
+
     await populateMonthFilter();
     await loadDashboardData();
 }
 
 function handleSearch() {
-    currentPage = 1;
+    currentPage = 1; 
     displayLogPage();
 }
+
 
 async function populateMonthFilter() {
     const monthFilter = document.getElementById('monthFilter');
@@ -112,10 +131,27 @@ async function loadDashboardData() {
     renderChart(labels, dailyData);
 }
 
+
 function getFilteredData() {
-    const searchFilter = document.getElementById('logSearchInput').value.toUpperCase();
-    if (!searchFilter) return fullLogData;
-    return fullLogData.filter(item => item.namaAerox.toUpperCase().includes(searchFilter) || item.consumer.toUpperCase().includes(searchFilter));
+    const nameFilter = document.getElementById('logSearchInput').value.toUpperCase();
+    const shiftFilter = document.querySelector('input[data-filter="shift"]')?.value.trim();
+    const consumerFilter = document.querySelector('input[data-filter="consumer"]')?.value.trim();
+    const qtyFilter = document.querySelector('input[data-filter="qty"]')?.value.trim();
+    const dateFilter = document.querySelector('input[data-filter="tanggal"]')?.value.trim();
+
+    return fullLogData.filter(item => {
+        const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { 
+            day: '2-digit', month: 'short', year: 'numeric' 
+        });
+
+        const matchName = !nameFilter || item.namaCat.toUpperCase().includes(nameFilter);
+        const matchShift = !shiftFilter || String(item.shift) === shiftFilter;
+        const matchConsumer = !consumerFilter || item.consumer.toUpperCase().includes(consumerFilter);
+        const matchQty = !qtyFilter || String(item.qty) === qtyFilter;
+        const matchDate = !dateFilter || formattedTanggal.toLowerCase().includes(dateFilter.toLowerCase());
+
+        return matchName && matchShift && matchConsumer && matchQty && matchDate;
+    });
 }
 
 function displayLogPage() {
