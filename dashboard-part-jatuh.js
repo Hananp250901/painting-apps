@@ -192,7 +192,7 @@ async function loadDashboardData() {
 }
 
 function getFilteredData() {
-    const nameFilter = document.getElementById('logSearchInput').value.toUpperCase();
+    const nameFilter = document.querySelector('input[data-filter="nama"]')?.value.trim();
     const shiftFilter = document.querySelector('input[data-filter="shift"]')?.value.trim();
     const part_numberFilter = document.querySelector('input[data-filter="part_number"]')?.value.trim();
     const qtyFilter = document.querySelector('input[data-filter="qty"]')?.value.trim();
@@ -203,7 +203,7 @@ function getFilteredData() {
             day: '2-digit', month: 'short', year: 'numeric' 
         });
 
-        const matchName = !nameFilter || item.namaCat.toUpperCase().includes(nameFilter);
+        const matchName = !nameFilter || item.namaPart.toUpperCase().includes(nameFilter);
         const matchShift = !shiftFilter || String(item.shift) === shiftFilter;
         const matchPart_number = !part_numberFilter || item.part_number.toUpperCase().includes(part_numberFilter);
         const matchQty = !qtyFilter || String(item.qty) === qtyFilter;

@@ -133,7 +133,7 @@ async function loadDashboardData() {
 
 
 function getFilteredData() {
-    const nameFilter = document.getElementById('logSearchInput').value.toUpperCase();
+    const nameFilter = document.querySelector('input[data-filter="nama"]')?.value.trim();
     const shiftFilter = document.querySelector('input[data-filter="shift"]')?.value.trim();
     const consumerFilter = document.querySelector('input[data-filter="consumer"]')?.value.trim();
     const qtyFilter = document.querySelector('input[data-filter="qty"]')?.value.trim();
@@ -144,7 +144,7 @@ function getFilteredData() {
             day: '2-digit', month: 'short', year: 'numeric' 
         });
 
-        const matchName = !nameFilter || item.namaCat.toUpperCase().includes(nameFilter);
+        const matchName = !nameFilter || item.namaAerox.toUpperCase().includes(nameFilter);
         const matchShift = !shiftFilter || String(item.shift) === shiftFilter;
         const matchConsumer = !consumerFilter || item.consumer.toUpperCase().includes(consumerFilter);
         const matchQty = !qtyFilter || String(item.qty) === qtyFilter;

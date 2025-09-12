@@ -111,22 +111,28 @@
 
         <div class="chart-container">
             <div class="chart-header">
-        <h4 id="chartTitle"></h4>
-        <button id="downloadChartButton" class="action-button"><i class='bx bxs-download'></i> Download Gambar</button>
-             </div>
-        <div class="chart-wrapper">
-            <canvas id="catUsageChart"></canvas>
+                <h4 id="itemChartTitle">Monitoring Pemakaian Thinner per Item</h4>
+                <button id="downloadItemChartButton" class="action-button"><i class='bx bx-download'></i>Download Gambar</button>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="itemThinnerUsageChart"></canvas>
+            </div>
         </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h4 id="dailyChartTitle">Analisis Pemakaian Thinner Harian</h4>
+                <button id="downloadDailyChartButton" class="action-button"><i class='bx bx-download'></i>Download Gambar</button>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="dailyThinnerUsageChart"></canvas>
+            </div>
         </div>
 
         <div class="log-container">
             <div class="log-header">
                 <h3><i class='bx bx-history'></i> Log Input Terakhir</h3>
                 <div class="search-and-actions">
-                    <div class="search-wrapper">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="logSearchInput" placeholder="Cari berdasarkan nama thinner...">
-                    </div>
                     <button id="downloadCsvButton" class="action-button">
                         <i class='bx bx-download'></i>
                         Download CSV

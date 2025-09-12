@@ -233,10 +233,10 @@ table tbody tr:hover { background-color: #f0f5ff; }
     position: absolute; left: 15px; top: 50%;
     transform: translateY(-50%); color: #999; font-size: 20px;
 }
-#logSearchInput {
+/* #logSearchInput {
     padding: 10px 15px 10px 45px; border: 1px solid #ddd;
     border-radius: 8px; width: 300px; font-size: 15px;
-}
+} */
 .action-button {
     text-decoration: none; background-color: var(--blue-primary); color: #fff;
     padding: 10px 20px; border-radius: 8px; font-weight: 500; font-size: 15px;
