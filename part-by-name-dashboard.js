@@ -2,15 +2,16 @@
 const SUPABASE_URL = 'https://fbfvhcwisvlyodwvmpqg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiZnZoY3dpc3ZseW9kd3ZtcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MTQ2MzQsImV4cCI6MjA3MjM5MDYzNH0.mbn9B1xEr_8kmC2LOP5Jv5O7AEIK7Fa1gxrqJ91WNx4';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 Chart.register(ChartDataLabels);
 
 let currentChart = null;
+let currentDonutChart = null; 
 
 // --- EVENT LISTENERS ---
 document.addEventListener('DOMContentLoaded', initializeDashboard);
 document.getElementById('monthFilter').addEventListener('change', loadChartData);
 document.getElementById('downloadChartButton').addEventListener('click', downloadChartImage);
+document.getElementById('downloadDonutChartButton').addEventListener('click', downloadDonutChartImage); // Event listener baru
 
 // --- FUNGSI UTAMA ---
 async function initializeDashboard() {
@@ -61,9 +62,10 @@ async function loadChartData() {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     
+    // Mengubah 'nama' menjadi 'shift' sesuai permintaan
     const { data, error } = await supabase
         .from('pemakaian_part_jatuh')
-        .select('namaPart, qty')
+        .select('namaPart, qty, shift') 
         .gte('tanggal', startDate)
         .lte('tanggal', endDate);
 
@@ -72,33 +74,48 @@ async function loadChartData() {
         return;
     }
     
-    document.getElementById('chartTitle').textContent = `Peringkat Part Jatuh - ${monthText}`;
-    const ctx = document.getElementById('rankingChart').getContext('2d');
     if (currentChart) currentChart.destroy();
-    
+    if (currentDonutChart) currentDonutChart.destroy();
+
+    document.getElementById('chartTitle').textContent = `Peringkat Part Gagal Proses - ${monthText}`;
+    document.getElementById('donutChartTitle').textContent = `Part Gagal Proses by leader - ${monthText}`;
+
     if (data.length === 0) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        const barCtx = document.getElementById('rankingChart').getContext('2d');
+        const donutCtx = document.getElementById('donutChartByName').getContext('2d');
+        barCtx.clearRect(0, 0, barCtx.canvas.width, barCtx.canvas.height);
+        barCtx.fillText("Tidak ada data untuk bulan ini.", barCtx.canvas.width / 2, barCtx.canvas.height / 2);
+        donutCtx.clearRect(0, 0, donutCtx.canvas.width, donutCtx.canvas.height);
+        donutCtx.fillText("Tidak ada data untuk bulan ini.", donutCtx.canvas.width / 2, donutCtx.canvas.height / 2);
         return;
     }
 
-    const usageByName = new Map();
+    // --- Proses Data untuk Grafik Batang (Peringkat Part) ---
+    const usageByPartName = new Map();
     data.forEach(item => {
-        usageByName.set(item.namaPart, (usageByName.get(item.namaPart) || 0) + item.qty);
+        usageByPartName.set(item.namaPart, (usageByPartName.get(item.namaPart) || 0) + item.qty);
     });
+    const sortedPartData = Array.from(usageByPartName.entries()).sort((a, b) => b[1] - a[1]).slice(0, 15);
+    const barLabels = sortedPartData.map(item => item[0]);
+    const barChartData = sortedPartData.map(item => item[1]);
+    renderSortedChart(barLabels, barChartData);
 
-    const sortedData = Array.from(usageByName.entries()).sort((a, b) => b[1] - a[1]).slice(0, 15);
-
-    const labels = sortedData.map(item => item[0]);
-    const chartData = sortedData.map(item => item[1]);
-
-    renderSortedChart(labels, chartData);
+    // --- Proses Data untuk Grafik Donat (Berdasarkan Shift) ---
+    const usageByShift = new Map();
+    data.forEach(item => {
+        if (item.shift) {
+             usageByShift.set(item.shift, (usageByShift.get(item.shift) || 0) + item.qty);
+        }
+    });
+    const sortedShiftData = Array.from(usageByShift.entries()).sort((a, b) => b[1] - a[1]);
+    const donutLabels = sortedShiftData.map(item => item[0]);
+    const donutChartData = sortedShiftData.map(item => item[1]);
+    renderDonutChart(donutLabels, donutChartData);
 }
 
 function renderSortedChart(labels, data) {
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     const ctx = document.getElementById('rankingChart').getContext('2d');
-    
     
     currentChart = new Chart(ctx, {
         type: 'bar',
@@ -139,18 +156,87 @@ function renderSortedChart(labels, data) {
     });
 }
 
+function renderDonutChart(labels, data) {
+    const ctx = document.getElementById('donutChartByName').getContext('2d');
+    const total = data.reduce((acc, value) => acc + value, 0);
+
+    currentDonutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Qty',
+                data: data,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                datalabels: {
+                    formatter: (value, context) => {
+                        if (total === 0) return '0 (0%)';
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${value.toLocaleString('id-ID')}\n(${percentage}%)`;
+                    },
+                    color: '#fff',
+                    textAlign: 'center',
+                    font: {
+                        weight: 'bold'
+                    }
+                }
+            }
+        }
+    });
+}
+
 function downloadChartImage() {
     const canvas = document.getElementById('rankingChart');
     if (!canvas) { return; }
-    const newCtx = document.createElement('canvas').getContext('2d');
-    newCtx.canvas.width = canvas.width;
-    newCtx.canvas.height = canvas.height;
+    
+    const newCanvas = document.createElement('canvas');
+    newCanvas.width = canvas.width;
+    newCanvas.height = canvas.height;
+    const newCtx = newCanvas.getContext('2d');
     newCtx.fillStyle = '#FFFFFF';
-    newCtx.fillRect(0, 0, newCtx.canvas.width, newCtx.canvas.height);
+    newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
     newCtx.drawImage(canvas, 0, 0);
+
     const link = document.createElement('a');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     link.download = `Ranking_Part_Jatuh_${monthText.replace(/ /g, "_")}.png`;
-    link.href = newCtx.canvas.toDataURL('image/png');
+    link.href = newCanvas.toDataURL('image/png');
+    link.click();
+}
+
+// --- FUNGSI BARU UNTUK MENGUNDUH GRAFIK DONAT ---
+function downloadDonutChartImage() {
+    const canvas = document.getElementById('donutChartByName');
+    if (!canvas) { return; }
+
+    const newCanvas = document.createElement('canvas');
+    newCanvas.width = canvas.width;
+    newCanvas.height = canvas.height;
+    const newCtx = newCanvas.getContext('2d');
+    newCtx.fillStyle = '#FFFFFF';
+    newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+    newCtx.drawImage(canvas, 0, 0);
+
+    const link = document.createElement('a');
+    const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
+    link.download = `Part_Jatuh_per_Shift_${monthText.replace(/ /g, "_")}.png`;
+    link.href = newCanvas.toDataURL('image/png');
     link.click();
 }
