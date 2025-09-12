@@ -335,6 +335,33 @@ body.form-full-screen .form-container {
     #logSearchInput { width: 100%; }
     .search-and-actions .action-button { width: 100%; justify-content: center; }
     .master-cat-container { grid-template-columns: 1fr; }
+    .main-content {
+        /* Mengurangi padding di mobile agar tidak terlalu sempit */
+        padding: 10px;
+    }
+
+    .chart-container {
+        /* Mengurangi padding di dalam kotak chart */
+        padding: 10px;
+    }
+
+    .chart-wrapper {
+        /* PENTING: Memberi tinggi minimum agar canvas grafik punya ruang */
+        min-height: 350px;
+        position: relative; /* Wajib agar Chart.js bisa menyesuaikan ukuran */
+    }
+
+    .header-content {
+        /* Membuat filter dan tombol menjadi vertikal di mobile */
+        flex-direction: column;
+        align-items: flex-start; /* Rata kiri */
+        gap: 15px; /* Jarak antar elemen */
+    }
+
+    .log-container .table-wrapper {
+        /* Membuat tabel bisa di-scroll ke samping jika tidak muat */
+        overflow-x: auto;
+    }
 }
 
 /* Perbaikan untuk Tampilan Choices.js */
