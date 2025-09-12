@@ -23,7 +23,7 @@
     <div class="menu-bar">
         <div class="menu">
             <ul class="menu-links">
-                <li class="nav-link dropdown">
+                <li class="nav-link dropdown" data-role="operator">
                     <div class="dropdown-toggle">
                         <i class='bx bxs-paint-roll icon'></i>
                         <span class="text nav-text">CAT</span>
@@ -38,7 +38,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-link dropdown">
+                <li class="nav-link dropdown" data-role="operator">
                     <div class="dropdown-toggle">
                         <i class='bx bxs-color-fill icon'></i>
                         <span class="text nav-text">THINNER</span>
@@ -53,7 +53,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-link dropdown">
+                <li class="nav-link dropdown" data-role="operator">
                     <div class="dropdown-toggle">
                         <i class='bx bxs-car-mechanic icon'></i>
                         <span class="text nav-text">AEROX</span>
@@ -68,7 +68,7 @@
                     </ul>
                 </li>
                 
-                <li class="nav-link dropdown">
+                <li class="nav-link dropdown" data-role="admin">
                     <div class="dropdown-toggle">
                         <i class='bx bxs-wrench icon'></i>
                         <span class="text nav-text">PART JATUH</span>
@@ -111,14 +111,23 @@
 
         <div class="chart-container">
             <div class="chart-header">
-                <h4 id="chartTitle">Analisis Pemakaian Cat</h4>
-                <button id="downloadChartButton" class="action-button"><i class='bx bx-download'></i>Download Gambar</button>
+                <h4 id="itemChartTitle">Monitoring Pemakaian Cat per Item</h4>
+                <button id="downloadItemChartButton" class="action-button"><i class='bx bx-download'></i>Download Gambar</button>
             </div>
-    
             <div class="chart-wrapper">
-                <canvas id="usageChart"></canvas>
+                <canvas id="itemUsageChart"></canvas>
             </div>
         </div>
+        <div class="chart-container">
+            <div class="chart-header">
+                <h4 id="dailyChartTitle">Analisis Pemakaian Cat Harian</h4>
+                <button id="downloadDailyChartButton" class="action-button"><i class='bx bx-download'></i>Download Gambar</button>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="dailyUsageChart"></canvas>
+            </div>
+        </div>
+
         <div class="log-container">
             <div class="log-header">
                 <h3><i class='bx bx-history'></i> Log Input Terakhir</h3>
@@ -163,6 +172,7 @@
     
     <script src="dashboard-cat.js"></script>
     <script src="sidebar.js"></script>
+    <script src="app.js"></script>
 
 </body>
 </html>
