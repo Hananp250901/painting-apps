@@ -108,7 +108,7 @@ function renderItemUsageChart(data) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    document.getElementById('itemChartTitle').textContent = `Monitoring Pemakaian Cat per Item - ${monthText}`;
+    document.getElementById('itemChartTitle').textContent = `Monitoring Pemakaian Cat per Pail - ${monthText}`;
 
     if (window.myItemChart) {
         window.myItemChart.destroy();
