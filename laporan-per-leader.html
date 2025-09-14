@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Part Jatuh per Item</title>
+    <title>Laporan Part Jatuh per Leader</title>
     <link rel="stylesheet" href="dashboard.css">
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
-<body>
-
+<body class="dashboard-body">
     <nav class="sidebar">
     <header>
         <div class="image-text">
@@ -101,60 +98,40 @@
     <section class="main-content">
         <i class='bx bx-menu' id="sidebar-toggle"></i>
         <div class="header-content">
-            <h1>Laporan Part Gagal Proses per Item</h1>
+            <h1>Laporan Peringkat Part Gagal Proses per Leader</h1>
             <div class="filter-wrapper">
-                <label for="monthFilter">Bulan:</label>
+                <label for="monthFilter">Tampilkan Data Bulan:</label>
                 <select id="monthFilter"></select>
             </div>
-             <div class="filter-wrapper">
-                <label for="partNameFilter">Pilih Nama Part:</label>
-                <select id="partNameFilter"></select>
-            </div>
-            <a href="tambah-part.html" class="action-button">
-                <i class='bx bx-plus'></i>
-                Tambah Part Jatuh
-            </a>
         </div>
 
         <div class="chart-container">
             <div class="chart-header">
-                <h4 id="chartTitle">Analisis Part Jatuh</h4>
-                <button id="downloadChartButton" class="action-button"><i class='bx bx-download'></i>Download Gambar</button>
+                <h4 id="titleSunarno">Peringkat Top 10 - SUNARNO</h4>
+                <button id="downloadSunarno" class="action-button"><i class='bx bxs-download'></i> Download Gambar</button>
             </div>
-    
             <div class="chart-wrapper">
-                <canvas id="usageChart"></canvas>
+                <canvas id="chartSunarno"></canvas>
             </div>
         </div>
-        <div class="log-container">
-            <div class="log-header">
-                <h3><i class='bx bx-history'></i> Log Input Terakhir</h3>
-                <div class="search-and-actions">
-                     <button id="downloadCsvButton" class="action-button">
-                        <i class='bx bx-download'></i>
-                        Download CSV
-                    </button>
-                </div>
+      
+        <div class="chart-container">
+            <div class="chart-header">
+                <h4 id="titleWahyuDedi">Peringkat Top 10 - WAHYU DEDI</h4>
+                <button id="downloadWahyuDedi" class="action-button"><i class='bx bxs-download'></i> Download Gambar</button>
             </div>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Shift</th>
-                            <th>Nama Part</th>
-                            <th>Part Number</th>
-                            <th>Qty</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logTableBody"></tbody>
-                </table>
+            <div class="chart-wrapper">
+                <canvas id="chartWahyuDedi"></canvas>
             </div>
-             <div class="pagination-controls">
-                <button id="togglePaginationButton" class="page-button">Tampilkan Semua</button>
-                <button id="prevPageButton" class="page-button" disabled>&laquo; Sebelumnya</button>
-                <span id="pageInfo">Halaman 1 dari 1</span>
-                <button id="nextPageButton" class="page-button" disabled>Berikutnya &raquo;</button>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h4 id="titleNurAhmad">Peringkat Top 10 - NUR AHMAD</h4>
+                <button id="downloadNurAhmad" class="action-button"><i class='bx bxs-download'></i> Download Gambar</button>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="chartNurAhmad"></canvas>
             </div>
         </div>
     </section>
@@ -163,8 +140,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <script src="laporan-part-jatuh-detail.js"></script> 
     <script src="sidebar.js"></script>
-
+    <script src="laporan-per-leader.js"></script>
 </body>
 </html>

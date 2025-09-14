@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('monthFilter').addEventListener('change', () => {
         currentPage = 1; loadDashboardData();
     });
-    document.getElementById('logSearchInput').addEventListener('keyup', handleSearch);
     document.getElementById('downloadCsvButton').addEventListener('click', exportToCSV);
     document.getElementById('downloadChartButton').addEventListener('click', downloadChartImage);
     document.getElementById('prevPageButton').addEventListener('click', () => { if (currentPage > 1) { currentPage--; displayLogPage(); }});
@@ -165,7 +164,7 @@ async function loadDashboardData() {
     displayLogPage();
 
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    document.getElementById('chartTitle').textContent = `Analisis Part Jatuh - ${monthText}`;
+    document.getElementById('chartTitle').textContent = `Analisis Gagal Proses - ${monthText}`;
 
     const ctx = document.getElementById('usageChart').getContext('2d');
     if (currentChart) currentChart.destroy();
