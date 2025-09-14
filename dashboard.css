@@ -104,6 +104,26 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); z-index: 100;
     transition: all 0.3s ease;
 }
+/* Tombol toggle */
+#sidebar-toggle {
+  display: inline-block;   /* selalu muncul */
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 15px;
+  color: #333;
+  background: none;
+  border: none;
+}
+
+/* Desktop toggle */
+.sidebar.collapsed {
+  left: -250px; /* sembunyikan sidebar */
+}
+
+.sidebar.collapsed ~ .main-content {
+  left: 0;
+  width: 100%;
+}
 .sidebar header {
     position: relative; padding-bottom: 15px; border-bottom: 1px solid var(--grey-light);
 }
@@ -320,7 +340,7 @@ body.form-full-screen .form-container {
 .delete-button:hover { background-color: #d93636; }
 
 /* --- RESPONSIVE --- */
-#sidebar-toggle { display: none; font-size: 28px; cursor: pointer; margin-bottom: 20px; color: #555; }
+/* #sidebar-toggle { display: none; font-size: 28px; cursor: pointer; margin-bottom: 20px; color: #555; } */
 @media (max-width: 768px) {
     .sidebar { left: -250px; }
     .sidebar.active { left: 0; }
