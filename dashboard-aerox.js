@@ -59,6 +59,7 @@ async function initializeDashboard() {
 
     await populateMonthFilter();
     await loadDashboardData();
+    await populateAeroxDropdown();
 }
 
 function handleSearch() {
@@ -158,15 +159,25 @@ function displayLogPage() {
     const tableBody = document.getElementById('logTableBody');
     const filtered = getFilteredData();
     filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || a.shift - b.shift);
-    const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
-    if (currentPage > totalPages) currentPage = 1;
     const dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-    let html = '';
-    dataToDisplay.forEach(item => {
-        const t = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        html += `<tr><td>${t}</td><td>${item.shift}</td><td>${item.consumer}</td><td>${item.namaAerox}</td><td>${item.qty}</td></tr>`;
-    });
-    tableBody.innerHTML = html || '<tr><td colspan="4">Tidak ada data yang cocok.</td></tr>';
+    
+    // === PERUBAHAN: Tambahkan tombol Edit dan Delete di sini ===
+    tableBody.innerHTML = dataToDisplay.map(item => {
+        const tgl = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `<tr>
+                    <td>${tgl}</td>
+                    <td>${item.shift}</td>
+                    <td>${item.consumer}</td>
+                    <td>${item.namaAerox}</td>
+                    <td>${item.qty}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editLog(${item.id})">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteLog(${item.id}, '${item.namaAerox.replace(/'/g, "\\'")}')">Delete</button>
+                    </td>
+                </tr>`;
+    }).join('') || '<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>'; // Colspan jadi 6
+
+    const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
     document.getElementById('pageInfo').textContent = showAll ? `${filtered.length} Item` : `Halaman ${currentPage} dari ${totalPages}`;
     document.getElementById('prevPageButton').disabled = currentPage === 1;
     document.getElementById('nextPageButton').disabled = currentPage >= totalPages;
@@ -241,4 +252,94 @@ function downloadChartImage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ==========================================================
+// === TAMBAHAN: FUNGSI UNTUK MODAL EDIT & DELETE ===
+// ==========================================================
+
+const modal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
+const cancelButton = document.getElementById('cancelButton');
+const closeButton = document.querySelector('.close-button');
+
+function closeEditModal() { modal.classList.add('hidden'); }
+
+cancelButton.addEventListener('click', closeEditModal);
+closeButton.addEventListener('click', closeEditModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeEditModal(); });
+
+async function populateAeroxDropdown() {
+    const aeroxSelect = document.getElementById('editNamaAerox');
+    if (!aeroxSelect) return;
+    aeroxSelect.innerHTML = '<option value="">Memuat...</option>';
+    
+    const { data, error } = await supabase
+        .from('master_aerox') // Ambil dari tabel master_aerox
+        .select('nama')
+        .order('nama', { ascending: true });
+
+    if (error) {
+        console.error('Gagal mengambil daftar master aerox:', error);
+        aeroxSelect.innerHTML = '<option value="">Gagal memuat</option>';
+        return;
+    }
+    
+    aeroxSelect.innerHTML = '<option value="">-- Pilih Nama Aerox --</option>';
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.nama;
+        option.textContent = item.nama;
+        aeroxSelect.appendChild(option);
+    });
+}
+
+async function editLog(id) {
+    const { data, error } = await supabase.from('pemakaian_aerox').select('*').eq('id', id).single();
+    if (error) {
+        alert('Gagal mengambil data untuk diedit.');
+        return;
+    }
+    if (data) {
+        document.getElementById('editId').value = data.id;
+        document.getElementById('editTanggal').value = data.tanggal;
+        document.getElementById('editShift').value = data.shift;
+        document.getElementById('editConsumer').value = data.consumer; // Isi field consumer
+        document.getElementById('editNamaAerox').value = data.namaAerox;
+        document.getElementById('editQty').value = data.qty;
+        modal.classList.remove('hidden');
+    }
+}
+
+editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const idToUpdate = document.getElementById('editId').value;
+    const updatedData = {
+        tanggal: document.getElementById('editTanggal').value,
+        shift: document.getElementById('editShift').value,
+        consumer: document.getElementById('editConsumer').value, // Simpan field consumer
+        namaAerox: document.getElementById('editNamaAerox').value,
+        qty: document.getElementById('editQty').value,
+    };
+
+    const { error } = await supabase.from('pemakaian_aerox').update(updatedData).eq('id', idToUpdate);
+    if (error) {
+        alert(`Gagal memperbarui data: ${error.message}`);
+    } else {
+        alert('Data berhasil diperbarui!');
+        closeEditModal();
+        loadDashboardData();
+    }
+});
+
+async function deleteLog(id, namaAerox) {
+    if (confirm(`Anda yakin ingin menghapus data: \n"${namaAerox}"?`)) {
+        const { error } = await supabase.from('pemakaian_aerox').delete().match({ id: id });
+        if (error) {
+            alert(`Gagal menghapus data: ${error.message}`);
+        } else {
+            alert('Data berhasil dihapus!');
+            loadDashboardData();
+        }
+    }
 }

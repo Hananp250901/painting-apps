@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializeDashboard() {
     await populateMonthFilter();
     await loadDashboardData();
+    await populatePartDropdown();
 }
 
 function handleSearch() {
@@ -217,17 +218,26 @@ function displayLogPage() {
     const filtered = getFilteredData();
     filtered.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
 
-    const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
-    if (currentPage > totalPages) currentPage = totalPages;
-
     const dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-    let html = '';
-    dataToDisplay.forEach(item => {
-        const t = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        html += `<tr><td>${t}</td><td>${item.shift}</td><td>${item.part_number || 'N/A'}</td><td>${item.namaPart}</td><td>${item.qty}</td></tr>`;
-    });
-    tableBody.innerHTML = html || '<tr><td colspan="5">Tidak ada data yang cocok.</td></tr>';
+    // INI BAGIAN PENTINGNYA: Menambahkan <td> untuk tombol
+    tableBody.innerHTML = dataToDisplay.map(item => {
+        const tgl = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `<tr>
+                    <td>${tgl}</td>
+                    <td>${item.shift}</td>
+                    <td>${item.part_number || 'N/A'}</td>
+                    <td>${item.namaPart}</td>
+                    <td>${item.qty}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editLog(${item.id})">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteLog(${item.id}, '${(item.namaPart || '').replace(/'/g, "\\'")}')">Delete</button>
+                    </td>
+                </tr>`;
+    }).join('') || '<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>'; // Pastikan colspan adalah 6
+
+    // Update pagination controls (kode ini seharusnya sudah ada)
+    const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
     document.getElementById('pageInfo').textContent = showAll ? `${filtered.length} Item` : `Halaman ${currentPage} dari ${totalPages}`;
     document.getElementById('prevPageButton').disabled = currentPage === 1;
     document.getElementById('nextPageButton').disabled = currentPage >= totalPages;
@@ -293,4 +303,104 @@ function downloadChartImage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ==========================================================
+// === TAMBAHAN: FUNGSI UNTUK MODAL EDIT & DELETE PART JATUH ===
+// ==========================================================
+
+const modal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
+const cancelButton = document.getElementById('cancelButton');
+const closeButton = document.querySelector('.close-button');
+
+function closeEditModal() { modal.classList.add('hidden'); }
+
+cancelButton.addEventListener('click', closeEditModal);
+closeButton.addEventListener('click', closeEditModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeEditModal(); });
+
+async function populatePartDropdown() {
+    const partSelect = document.getElementById('editNamaPart');
+    const partNumberInput = document.getElementById('editPartNumber');
+    if (!partSelect || !partNumberInput) return;
+
+    partSelect.innerHTML = '<option value="">Memuat...</option>';
+    const { data, error } = await supabase
+        .from('master_part_jatuh')
+        .select('part_number, namaPart')
+        .order('namaPart', { ascending: true });
+
+    if (error) {
+        console.error('Gagal mengambil daftar master part:', error);
+        partSelect.innerHTML = '<option value="">Gagal memuat</option>';
+        return;
+    }
+    
+    partSelect.innerHTML = '<option value="">-- Pilih Nama Part --</option>';
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.namaPart;
+        option.textContent = item.namaPart;
+        option.dataset.partNumber = item.part_number; // Simpan part_number di data attribute
+        partSelect.appendChild(option);
+    });
+
+    // Tambahkan event listener untuk mengisi part number secara otomatis
+    partSelect.addEventListener('change', (e) => {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        partNumberInput.value = selectedOption.dataset.partNumber || '';
+    });
+}
+
+async function editLog(id) {
+    const { data, error } = await supabase.from('pemakaian_part_jatuh').select('*').eq('id', id).single();
+    if (error || !data) {
+        alert('Gagal mengambil data untuk diedit.');
+        return;
+    }
+    document.getElementById('editId').value = data.id;
+    document.getElementById('editTanggal').value = data.tanggal;
+    document.getElementById('editShift').value = data.shift;
+    document.getElementById('editQty').value = data.qty;
+    
+    // Set dropdown namaPart dan trigger change untuk mengisi partNumber
+    const partSelect = document.getElementById('editNamaPart');
+    partSelect.value = data.namaPart;
+    partSelect.dispatchEvent(new Event('change')); // Ini penting untuk update part number
+
+    modal.classList.remove('hidden');
+}
+
+editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const idToUpdate = document.getElementById('editId').value;
+    const updatedData = {
+        tanggal: document.getElementById('editTanggal').value,
+        shift: document.getElementById('editShift').value,
+        namaPart: document.getElementById('editNamaPart').value,
+        part_number: document.getElementById('editPartNumber').value,
+        qty: document.getElementById('editQty').value,
+    };
+
+    const { error } = await supabase.from('pemakaian_part_jatuh').update(updatedData).eq('id', idToUpdate);
+    if (error) {
+        alert(`Gagal memperbarui data: ${error.message}`);
+    } else {
+        alert('Data berhasil diperbarui!');
+        closeEditModal();
+        loadDashboardData();
+    }
+});
+
+async function deleteLog(id, namaPart) {
+    if (confirm(`Anda yakin ingin menghapus data: \n"${namaPart}"?`)) {
+        const { error } = await supabase.from('pemakaian_part_jatuh').delete().match({ id: id });
+        if (error) {
+            alert(`Gagal menghapus data: ${error.message}`);
+        } else {
+            alert('Data berhasil dihapus!');
+            loadDashboardData();
+        }
+    }
 }

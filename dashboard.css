@@ -420,3 +420,25 @@ body.form-full-screen .form-container {
     color: #999;
     font-size: 12px;
 }
+
+.action-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    margin-right: 5px;
+    font-size: 14px;
+}
+.edit-btn {
+    background-color: #f0ad4e; /* Kuning */
+}
+.edit-btn:hover {
+    background-color: #ec971f;
+}
+.delete-btn {
+    background-color: #d9534f; /* Merah */
+}
+.delete-btn:hover {
+    background-color: #c9302c;
+}

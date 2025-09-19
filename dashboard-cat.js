@@ -48,6 +48,7 @@ async function initializeDashboard() {
 
     await populateMonthFilter();
     await loadDashboardData();
+    await populateCatDropdown();
 }
 
 async function populateMonthFilter() {
@@ -271,17 +272,29 @@ function getFilteredData() {
 }
 
 function displayLogPage() {
-    // ... Fungsi ini tidak berubah ...
     const tableBody = document.getElementById('logTableBody');
     if (!tableBody) return;
     const filtered = getFilteredData();
+    // Mengurutkan data berdasarkan tanggal terbaru, lalu shift
     filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || a.shift - b.shift);
+    
     let dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+    // === PERUBAHAN DI SINI UNTUK MENAMBAHKAN TOMBOL ===
     tableBody.innerHTML = dataToDisplay.map(item => {
         const tgl = new Date(item.tanggal + 'T00:00:00');
         const tglFormatted = tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        return `<tr><td>${tglFormatted}</td><td>${item.shift}</td><td>${item.namaCat}</td><td>${item.qty}</td></tr>`;
-    }).join('') || '<tr><td colspan="4">Tidak ada data yang cocok.</td></tr>';
+        return `<tr>
+                    <td>${tglFormatted}</td>
+                    <td>${item.shift}</td>
+                    <td>${item.namaCat}</td>
+                    <td>${item.qty}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editLog(${item.id})">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteLog(${item.id}, '${item.namaCat.replace(/'/g, "\\'")}')">Delete</button>
+                    </td>
+                </tr>`;
+    }).join('') || '<tr><td colspan="5">Tidak ada data yang cocok.</td></tr>'; // Colspan diubah menjadi 5
     
     updatePaginationControls(filtered.length);
 }
@@ -334,4 +347,145 @@ function downloadChartImage(canvasId, baseFileName) {
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     link.download = `${baseFileName}_${monthText.replace(/ /g, "_")}.png`;
     link.click();
+}
+
+
+// === FUNGSI BARU UNTUK MENGISI DROPDOWN NAMA CAT ===
+async function populateCatDropdown() {
+    // Ganti 'namaCat' atau 'editNamaCat' sesuai dengan ID elemen select Anda
+    const catSelect = document.getElementById('editNamaCat') || document.getElementById('namaCat');
+    if (!catSelect) return;
+
+    catSelect.innerHTML = '<option value="">Memuat nama cat...</option>';
+
+    // --- PERUBAHAN UTAMA DI SINI ---
+    // Mengambil data dari tabel 'master_cat' dan mengurutkannya
+    const { data, error } = await supabase
+        .from('master_cat') // Mengambil dari tabel master
+        .select('nama')        // Memilih kolom 'nama'
+        .order('nama', { ascending: true }); // Mengurutkan berdasarkan nama
+
+    if (error) {
+        console.error('Gagal mengambil daftar master cat:', error);
+        catSelect.innerHTML = '<option value="">Gagal memuat data</option>';
+        return;
+    }
+    
+    // Mengisi dropdown dengan data dari master_cat
+    catSelect.innerHTML = '<option value="">-- Pilih Nama Cat --</option>';
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.nama; // Menggunakan item.nama
+        option.textContent = item.nama; // Menampilkan item.nama
+        catSelect.appendChild(option);
+    });
+}
+
+// ==========================================================
+// === FUNGSI BARU UNTUK EDIT DAN DELETE (DIPERBARUI) ===
+// ==========================================================
+
+const modal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
+const cancelButton = document.getElementById('cancelButton');
+const closeButton = document.querySelector('.close-button');
+
+// Fungsi untuk menutup modal
+function closeEditModal() {
+    modal.classList.add('hidden');
+}
+
+// Tambahkan event listener untuk menutup modal
+cancelButton.addEventListener('click', closeEditModal);
+closeButton.addEventListener('click', closeEditModal);
+modal.addEventListener('click', (e) => {
+    // Tutup modal jika klik di luar area konten
+    if (e.target === modal) {
+        closeEditModal();
+    }
+});
+
+// Fungsi Edit yang diperbarui untuk menampilkan pop-up
+async function editLog(id) {
+    // ... (Kode di dalam fungsi ini tidak perlu diubah, 
+    // karena `document.getElementById('editNamaCat').value = data.namaCat;`
+    // akan secara otomatis memilih opsi yang benar pada dropdown) ...
+
+    // 1. Ambil data spesifik dari Supabase
+    const { data, error } = await supabase
+        .from('pemakaian_cat')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('Gagal mengambil data untuk diedit:', error);
+        alert('Gagal mengambil data.');
+        return;
+    }
+
+    if (data) {
+        // 2. Isi form di dalam pop-up dengan data yang didapat
+        document.getElementById('editId').value = data.id;
+        document.getElementById('editTanggal').value = data.tanggal;
+        document.getElementById('editShift').value = data.shift;
+        document.getElementById('editNamaCat').value = data.namaCat;
+        document.getElementById('editQty').value = data.qty;
+
+        // 3. Tampilkan modal
+        modal.classList.remove('hidden');
+    }
+}
+
+
+// Event listener untuk form submit (menyimpan perubahan)
+editForm.addEventListener('submit', async (e) => {
+    // ... (Kode di dalam fungsi ini juga tidak perlu diubah, 
+    // karena `document.getElementById('editNamaCat').value` 
+    // akan mengambil nilai dari opsi yang terpilih di dropdown) ...
+    e.preventDefault(); 
+
+    const idToUpdate = document.getElementById('editId').value;
+    const updatedData = {
+        tanggal: document.getElementById('editTanggal').value,
+        shift: document.getElementById('editShift').value,
+        namaCat: document.getElementById('editNamaCat').value,
+        qty: document.getElementById('editQty').value,
+    };
+
+    const { error } = await supabase
+        .from('pemakaian_cat')
+        .update(updatedData)
+        .eq('id', idToUpdate);
+
+    if (error) {
+        console.error('Gagal memperbarui data:', error);
+        alert(`Gagal memperbarui data: ${error.message}`);
+    } else {
+        alert('Data berhasil diperbarui!');
+        closeEditModal();
+        loadDashboardData(); 
+    }
+});
+
+async function deleteLog(id, namaCat) {
+    // Tampilkan konfirmasi sebelum menghapus
+    const confirmation = confirm(`Anda yakin ingin menghapus data pemakaian: \n"${namaCat}"?`);
+
+    if (confirmation) {
+        // Lakukan proses hapus data di Supabase
+        const { error } = await supabase
+            .from('pemakaian_cat')
+            .delete()
+            .match({ id: id });
+
+        if (error) {
+            console.error('Gagal menghapus data:', error);
+            alert(`Gagal menghapus data: ${error.message}`);
+        } else {
+            alert('Data berhasil dihapus!');
+            // Muat ulang data untuk memperbarui tabel dan grafik
+            loadDashboardData();
+        }
+    }
 }

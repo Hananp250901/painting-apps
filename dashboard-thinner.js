@@ -38,6 +38,7 @@ async function initializeDashboard() {
 
     await populateMonthFilter();
     await loadDashboardData();
+    await populateThinnerDropdown();
 }
 
 async function populateMonthFilter() {
@@ -197,10 +198,20 @@ function displayLogPage() {
     filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || a.shift - b.shift);
     const dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
     
+    // === PERUBAHAN: Tambahkan tombol Edit dan Delete ===
     tableBody.innerHTML = dataToDisplay.map(item => {
         const tgl = new Date(item.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        return `<tr><td>${tgl}</td><td>${item.shift}</td><td>${item.namaThinner}</td><td>${item.qty}</td></tr>`;
-    }).join('') || '<tr><td colspan="4">Tidak ada data yang cocok.</td></tr>';
+        return `<tr>
+                    <td>${tgl}</td>
+                    <td>${item.shift}</td>
+                    <td>${item.namaThinner}</td>
+                    <td>${item.qty}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editLog(${item.id})">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteLog(${item.id}, '${item.namaThinner.replace(/'/g, "\\'")}')">Delete</button>
+                    </td>
+                </tr>`;
+    }).join('') || '<tr><td colspan="5">Tidak ada data yang cocok.</td></tr>'; // Colspan jadi 5
     
     updatePaginationControls(filtered.length);
 }
@@ -250,4 +261,104 @@ function downloadChartImage(canvasId, baseFileName) {
     const month = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     link.download = `${baseFileName}_${month.replace(/ /g, "_")}.png`;
     link.click();
+}
+
+// ==========================================================
+// === TAMBAHAN: SEMUA FUNGSI BARU UNTUK FITUR EDIT/DELETE ===
+// ==========================================================
+
+const modal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
+const cancelButton = document.getElementById('cancelButton');
+const closeButton = document.querySelector('.close-button');
+
+// Fungsi untuk menutup modal
+function closeEditModal() {
+    modal.classList.add('hidden');
+}
+
+// Event listener untuk menutup modal
+cancelButton.addEventListener('click', closeEditModal);
+closeButton.addEventListener('click', closeEditModal);
+modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        closeEditModal();
+    }
+});
+
+// Fungsi untuk mengisi dropdown dari master_thinner
+async function populateThinnerDropdown() {
+    const thinnerSelect = document.getElementById('editNamaThinner');
+    if (!thinnerSelect) return;
+    thinnerSelect.innerHTML = '<option value="">Memuat...</option>';
+    
+    const { data, error } = await supabase
+        .from('master_thinner') // Ambil dari tabel master_thinner
+        .select('nama')
+        .order('nama', { ascending: true });
+
+    if (error) {
+        console.error('Gagal mengambil daftar master thinner:', error);
+        thinnerSelect.innerHTML = '<option value="">Gagal memuat</option>';
+        return;
+    }
+    
+    thinnerSelect.innerHTML = '<option value="">-- Pilih Nama Thinner --</option>';
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.nama;
+        option.textContent = item.nama;
+        thinnerSelect.appendChild(option);
+    });
+}
+
+// Fungsi untuk menampilkan data di pop-up edit
+async function editLog(id) {
+    const { data, error } = await supabase.from('pemakaian_thinner').select('*').eq('id', id).single();
+    if (error) {
+        alert('Gagal mengambil data untuk diedit.');
+        return;
+    }
+    if (data) {
+        document.getElementById('editId').value = data.id;
+        document.getElementById('editTanggal').value = data.tanggal;
+        document.getElementById('editShift').value = data.shift;
+        document.getElementById('editNamaThinner').value = data.namaThinner;
+        document.getElementById('editQty').value = data.qty;
+        modal.classList.remove('hidden');
+    }
+}
+
+// Event listener untuk menyimpan perubahan dari form edit
+editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const idToUpdate = document.getElementById('editId').value;
+    const updatedData = {
+        tanggal: document.getElementById('editTanggal').value,
+        shift: document.getElementById('editShift').value,
+        namaThinner: document.getElementById('editNamaThinner').value,
+        qty: document.getElementById('editQty').value,
+    };
+
+    const { error } = await supabase.from('pemakaian_thinner').update(updatedData).eq('id', idToUpdate);
+    if (error) {
+        alert(`Gagal memperbarui data: ${error.message}`);
+    } else {
+        alert('Data berhasil diperbarui!');
+        closeEditModal();
+        loadDashboardData();
+    }
+});
+
+// Fungsi untuk menghapus data
+async function deleteLog(id, namaThinner) {
+    if (confirm(`Anda yakin ingin menghapus data: \n"${namaThinner}"?`)) {
+        const { error } = await supabase.from('pemakaian_thinner').delete().match({ id: id });
+        if (error) {
+            alert(`Gagal menghapus data: ${error.message}`);
+        } else {
+            alert('Data berhasil dihapus!');
+            loadDashboardData();
+        }
+    }
 }
