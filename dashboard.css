@@ -442,3 +442,24 @@ body.form-full-screen .form-container {
 .delete-btn:hover {
     background-color: #c9302c;
 }
+
+.sidebar .menu-links .nav-link > a {
+    text-decoration: none; /* Menghilangkan garis bawah */
+    color: var(--text-color); /* Menggunakan variabel warna teks yang sudah ada */
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 0; /* Menyamakan jarak atas-bawah dengan menu lain */
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+/* Menambahkan efek hover agar sama seperti menu lain */
+.sidebar .menu-links .nav-link > a:hover {
+    background-color: var(--primary-color);
+}
+
+.sidebar .menu-links .nav-link > a:hover .icon,
+.sidebar .menu-links .nav-link > a:hover .text {
+    color: var(--sidebar-color);
+}

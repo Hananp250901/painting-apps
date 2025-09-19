@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Painting</title>
+  <link rel="stylesheet" href="dark-dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body>
+  <header class="main-header">
+    <h2>Dashboard Painting</h2>
+    <a href="dashboard-cat.html" class="back-button">Kembali ke Dashboard Utama</a>
+  </header>
+
+  <main class="chart-grid">
+    <!-- Baris 1 -->
+    <div class="chart-container">
+      <h4>Pemakaian Cat per Item (Pail)</h4>
+      <canvas id="catItemChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Pemakaian Cat BLACK MATT AHJ 01 CARGLOSS - September 2025</h4>
+      <canvas id="chartAnalisisCat"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Pemakaian Cat Harian (Liter)</h4>
+      <canvas id="catDailyChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Pemakaian Thinner per Item (Pail)</h4>
+      <canvas id="thinnerItemChart"></canvas>
+    </div>
+
+    <!-- Baris 2 -->
+    <div class="chart-container">
+      <h4>Pemakaian Thinner Harian (Liter)</h4>
+      <canvas id="thinnerDailyChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Pemakaian Aerox Harian (Pcs)</h4>
+      <canvas id="aeroxDailyChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Part Jatuh Harian (Qty)</h4>
+      <canvas id="partJatuhDailyChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h4>Peringkat Part Jatuh (Qty)</h4>
+      <canvas id="chartPeringkatPart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Part Jatuh per Leader</h4>
+      <canvas id="chartPartPerLeader"></canvas>
+    </div>
+
+    <!-- Baris 3 -->
+    <div class="chart-container">
+      <h4>Top 10 Part Jatuh - SUNARNO</h4>
+      <canvas id="chartSunarno"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Top 10 Part Jatuh - WAHYU DEDI</h4>
+      <canvas id="chartWahyuDedi"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4>Top 10 Part Jatuh - NUR AHMAD</h4>
+      <canvas id="chartNurAhmad"></canvas>
+    </div>
+
+    <!-- Baris 4 (Tambahan) -->
+
+    
+  </main>
+
+  <footer class="main-footer">
+    <p><i>© 2025 Dashboard Painting — @hnndvlpr</i></p>
+  </footer>
+
+  <script src="overview-dashboard.js"></script>
+</body>
+</html>
