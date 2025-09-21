@@ -8,76 +8,116 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
   <header class="main-header">
-    <h2>Dashboard Painting</h2>
+    <h1>Dashboard Painting</h1>
     <a href="dashboard-cat.html" class="back-button">Kembali ke Dashboard Utama</a>
   </header>
 
   <main class="chart-grid">
-    <!-- Baris 1 -->
     <div class="chart-container">
       <h4>Pemakaian Cat per Item (Pail)</h4>
-      <canvas id="catItemChart"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="catItemChart"></canvas>
+      </div>
     </div>
     <div class="chart-container">
       <h4>Pemakaian Cat BLACK MATT AHJ 01 CARGLOSS - September 2025</h4>
-      <canvas id="chartAnalisisCat"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="chartAnalisisCat"></canvas>
+      </div>
+
     </div>
     <div class="chart-container">
       <h4>Pemakaian Cat Harian (Liter)</h4>
-      <canvas id="catDailyChart"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="catDailyChart"></canvas>
+      </div>
     </div>
     <div class="chart-container">
       <h4>Pemakaian Thinner per Item (Pail)</h4>
-      <canvas id="thinnerItemChart"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="thinnerItemChart"></canvas>
+      </div>
     </div>
 
-    <!-- Baris 2 -->
+
     <div class="chart-container">
       <h4>Pemakaian Thinner Harian (Liter)</h4>
-      <canvas id="thinnerDailyChart"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="thinnerDailyChart"></canvas>
+      </div>
     </div>
     <div class="chart-container">
       <h4>Pemakaian Aerox Harian (Pcs)</h4>
-      <canvas id="aeroxDailyChart"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="aeroxDailyChart"></canvas>
+      </div> 
     </div>
     <div class="chart-container">
       <h4>Part Jatuh Harian (Qty)</h4>
-      <canvas id="partJatuhDailyChart"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="partJatuhDailyChart"></canvas>
+      </div>
     </div>
 
     <div class="chart-container">
       <h4>Peringkat Part Jatuh (Qty)</h4>
-      <canvas id="chartPeringkatPart"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="chartPeringkatPart"></canvas>
+      </div>
     </div>
     <div class="chart-container">
       <h4>Part Jatuh per Leader</h4>
-      <canvas id="chartPartPerLeader"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="chartPartPerLeader"></canvas>
+      </div>
     </div>
 
-    <!-- Baris 3 -->
+
     <div class="chart-container">
-      <h4>Top 10 Part Jatuh - SUNARNO</h4>
-      <canvas id="chartSunarno"></canvas>
+      <h4>Top 10 Part Gagal Proses - SUNARNO</h4>
+      <div class="canvas-wrapper">
+        <canvas id="chartSunarno"></canvas>
+      </div>
     </div>
     <div class="chart-container">
-      <h4>Top 10 Part Jatuh - WAHYU DEDI</h4>
-      <canvas id="chartWahyuDedi"></canvas>
+      <h4>Top 10 Part Gagal Proses - WAHYU DEDI</h4>
+      <div class="canvas-wrapper">
+        <canvas id="chartWahyuDedi"></canvas>
+      </div>
     </div>
     <div class="chart-container">
-      <h4>Top 10 Part Jatuh - NUR AHMAD</h4>
-      <canvas id="chartNurAhmad"></canvas>
+      <h4>Top 10 Part Gagal Proses - NUR AHMAD</h4>
+      <div class="canvas-wrapper">
+        <canvas id="chartNurAhmad"></canvas>
+      </div>
+    </div>
+    <div class="chart-container">
+      <a href="log-maintenance.html" class="chart-action-btn">Log</a>
+      <div class="canvas-wrapper">
+        <canvas id="chartMachine"></canvas>
+      </div>
+    </div>
+    <div class="chart-container">
+      <a href="log-maintenance.html" class="chart-action-btn">Log</a>
+      <div class="canvas-wrapper">
+        <canvas id="chartCategory"></canvas>
+      </div>
+    </div>
+    <div class="chart-container">
+      <a href="log-maintenance.html" class="chart-action-btn">Log</a>
+      <div class="canvas-wrapper">
+        <canvas id="chartMonth"></canvas>
+      </div>
     </div>
 
-    <!-- Baris 4 (Tambahan) -->
-
-    
   </main>
 
   <footer class="main-footer">
-    <p><i>© 2025 Dashboard Painting — @hnndvlpr</i></p>
+    <p><i>© 2025 Dashboard Painting — @hanandvlpr</i></p>
   </footer>
 
   <script src="overview-dashboard.js"></script>

@@ -3,6 +3,11 @@ const SUPABASE_URL = 'https://fbfvhcwisvlyodwvmpqg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiZnZoY3dpc3ZseW9kd3ZtcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MTQ2MzQsImV4cCI6MjA3MjM5MDYzNH0.mbn9B1xEr_8kmC2LOP5Jv5O7AEIK7Fa1gxrqJ91WNx4';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// TAMBAHKAN INI: Koneksi Supabase untuk data Lost Time Maintenance
+const LTM_SUPABASE_URL = "https://skjtzbldpvmacmotdomr.supabase.co";
+const LTM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNranR6YmxkcHZtYWNtb3Rkb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Nzk4ODYsImV4cCI6MjA3MzA1NTg4Nn0.u8Zg2k7us_wHnamqplRYZ7rI6ls68zRZ6iLgfitTviM";
+const supabaseLTM = window.supabase.createClient(LTM_SUPABASE_URL, LTM_SUPABASE_ANON_KEY);
+
 Chart.register(ChartDataLabels);
 
 // Variabel chart leader
@@ -54,20 +59,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     supabase.from('pemakaian_aerox').select('*').gte('tanggal', startDate).lte('tanggal', endDate),
     supabase.from('pemakaian_part_jatuh').select('*').gte('tanggal', startDate).lte('tanggal', endDate)
   ]);
+  // Ambil data lost time dari koneksi KEDUA (supabaseLTM)
+  const { data: maintenanceData, error: maintenanceError } = await supabaseLTM.from("lost_time_maintenance").select("*");
 
   renderCatCharts(catData.data);
   renderThinnerCharts(thinnerData.data);
   renderAeroxChart(aeroxData.data);
   renderPartJatuhChart(partJatuhData.data);
-
   renderLeaderCharts(partJatuhData.data);
-
-  // Tambahan
   renderPeringkatPartChart(partJatuhData.data);
   renderPartPerLeaderChart(partJatuhData.data);
   renderAnalisisCatChart(catData.data);
+  if (maintenanceError) {
+      console.error("Gagal mengambil data maintenance:", maintenanceError);
+  } else {
+      renderMaintenanceCharts(maintenanceData);
+  }
 });
 
+// === Grafik Cat ===
 // === Grafik Cat ===
 function renderCatCharts(data) {
   if (!data) return;
@@ -75,15 +85,22 @@ function renderCatCharts(data) {
   data.forEach(item => usageByItem.set(item.namaCat, (usageByItem.get(item.namaCat) || 0) + item.qty));
   const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
 
+  // BAGIAN YANG DIPERBAIKI ADA DI BAWAH INI
   new Chart('catItemChart', {
     type: 'bar',
     data: {
       labels: sortedData.map(x => x[0]),
-      datasets: [{ label: 'Total (Pail)', data: sortedData.map(x => (x[1]/20)), backgroundColor: '#e94560' }]
+      datasets: [{ 
+          label: 'Total (Pail)', 
+          data: sortedData.map(x => (x[1]/20)), 
+          backgroundColor: '#e94560',
+          maxBarThickness: 75 
+      }]
     },
-    options: darkChartOptions
+    // Opsi 'responsive' dan 'maintainAspectRatio' sudah ada di dalam darkChartOptions
+    options: darkChartOptions, 
   });
-
+  
   const dailyUsage = new Map();
   data.forEach(item => dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty));
   const sortedDaily = new Map([...dailyUsage.entries()].sort());
@@ -97,7 +114,6 @@ function renderCatCharts(data) {
     options: darkChartOptions
   });
 }
-
 // === Grafik Thinner ===
 function renderThinnerCharts(data) {
   if (!data) return;
@@ -275,4 +291,58 @@ function renderAnalisisCatChart(data) {
     },
     options: darkChartOptions
   });
+}
+// --- Opsi untuk Grafik Maintenance ---
+const maintenanceChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { labels: { color: "white" } },
+        title: { display: true, color: "white" },
+        datalabels: {
+            color: 'white',
+            anchor: 'end',
+            align: 'top',
+            formatter: Math.round,
+            font: { weight: 'bold' }
+        }
+    },
+    scales: { 
+        x: { ticks: { color: "white" }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }, 
+        y: { ticks: { color: "white" }, grid: { color: 'rgba(255, 255, 255, 0.1)' } } 
+    },
+};
+// --- FUNGSI BARU UNTUK GRAFIK MAINTENANCE ---
+function renderMaintenanceCharts(data) {
+    if (!data) return;
+
+    let machineData = {}, categoryData = {}, monthData = {};
+    data.forEach(row => {
+        // Ganti 'machine', 'category', 'date', 'lost_time' jika nama kolom berbeda
+        machineData[row.machine] = (machineData[row.machine] || 0) + row.lost_time;
+        categoryData[row.category] = (categoryData[row.category] || 0) + row.lost_time;
+        const month = row.date.slice(0, 7);
+        monthData[month] = (monthData[month] || 0) + row.lost_time;
+    });
+
+    // Grafik Lost Time per Machine
+    new Chart(document.getElementById("chartMachine"), {
+        type: "bar",
+        data: { labels: Object.keys(machineData), datasets: [{ label: "Lost Time per Machine", data: Object.values(machineData), backgroundColor: "yellow" }] },
+        options: { ...maintenanceChartOptions, plugins: { ...maintenanceChartOptions.plugins, title: { display: true, text: "Lost Time per Machine", color: 'white' } } }
+    });
+    
+    // Grafik Lost Time per Category
+    new Chart(document.getElementById("chartCategory"), {
+        type: "bar",
+        data: { labels: Object.keys(categoryData), datasets: [{ label: "Lost Time per Category", data: Object.values(categoryData), backgroundColor: "violet" }] },
+        options: { ...maintenanceChartOptions, plugins: { ...maintenanceChartOptions.plugins, title: { display: true, text: "Lost Time per Category", color: 'white' } } }
+    });
+
+    // Grafik Lost Time per Bulan
+    new Chart(document.getElementById("chartMonth"), {
+        type: "bar",
+        data: { labels: Object.keys(monthData), datasets: [{ label: "Lost Time per Bulan", data: Object.values(monthData), backgroundColor: "cyan" }] },
+        options: { ...maintenanceChartOptions, plugins: { ...maintenanceChartOptions.plugins, title: { display: true, text: "Lost Time per Bulan", color: 'white' } } }
+    });
 }

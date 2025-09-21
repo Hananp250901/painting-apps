@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Data - Lost Time Maintenance</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { background:#1e1e2f; color:white; font-family:Arial; display:flex; justify-content:center; align-items:center; min-height:100vh }
+    .form-container { background:#2a2a3d; padding:20px; border-radius:10px; width:400px; max-width:95% }
+    h2 { text-align:center; color:cyan }
+    label { display:block; margin:8px 0 4px }
+    input,select,textarea { width:100%; padding:6px; border-radius:5px; border:none; margin-bottom:10px }
+    .btn { padding:8px 15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin-right:10px }
+    .btn-save { background:limegreen; color:white }
+    .btn-back { background:crimson; color:white; text-decoration:none }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Add Data</h2>
+    <form id="dataForm">
+      <label>Date</label><input type="date" name="date" required>
+      <label>Machine</label>
+      <select name="machine" required>
+        <option>CONVEYOR</option><option>PPH308</option><option>BASE COAT</option><option>SLUDGE REMOVAL</option>
+        <option>OVEN</option><option>CLEAR COAT</option><option>AIR SUPPLY UNIT</option><option>SYSTEM/PROGRAM</option>
+        <option>PRIMER</option><option>BOILER</option>
+      </select>
+      <label>Category</label>
+      <select name="category" required>
+        <option>MEKANIK</option><option>PNEMATIC</option><option>SPRAY EQUIPMENT</option><option>ELECTRIC</option>
+      </select>
+      <label>Trouble</label><input type="text" name="trouble" required>
+      <label>Analysis</label><textarea name="analysis"></textarea>
+      <label>Repair</label><textarea name="repair"></textarea>
+      <label>Lost Time (minutes)</label><input type="number" name="lost_time" required>
+      <label>PIC</label><input type="text" name="pic" required>
+      <button type="submit" class="btn btn-save">Save</button>
+      <a href="dashboard-maintenance.html" class="btn btn-back">Back</a>
+    </form>
+  </div>
+
+  <script>
+    const { createClient } = supabase;
+    const supabaseUrl = "https://skjtzbldpvmacmotdomr.supabase.co"; 
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNranR6YmxkcHZtYWNtb3Rkb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Nzk4ODYsImV4cCI6MjA3MzA1NTg4Nn0.u8Zg2k7us_wHnamqplRYZ7rI6ls68zRZ6iLgfitTviM"; 
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    document.getElementById("dataForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const record = Object.fromEntries(formData.entries());
+      record.lost_time = parseInt(record.lost_time);
+
+      const { error } = await supabaseClient.from("lost_time_maintenance").insert([record]);
+      if (error) {
+        alert("Gagal simpan: "+error.message);
+      } else {
+        alert("Data berhasil disimpan!");
+        e.target.reset();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Lost Time Maintenance</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    body { background:#1e1e2f; color:white; font-family:Arial; margin:0 }
+    header { display:flex; justify-content:space-between; align-items:center; padding:15px; background:#2a2a3d }
+    h2 { margin:0; color:cyan }
+    .btn { padding:8px 15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin-left:10px }
+
+    .btn-add { background:cyan; color:black }
+    .btn-log { background:orange; color:black }
+    .container { display:grid; grid-template-columns:repeat(3,1fr); height:calc(100vh - 70px); gap:10px; padding:10px; box-sizing:border-box }
+    .card { background:#2a2a3d; border-radius:12px; padding:10px; display:flex; justify-content:center; align-items:center }
+    canvas { width:100%!important; height:100%!important }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Dashboard Lost Time Maintenance</h2>
+    <div>
+      <a href="overview-dashboard.html"><button class="btn btn-back">Dashboard</button></a>
+      <a href="add-data-maintenance.html"><button class="btn btn-add">+ Add Data</button></a>
+      <a href="log-maintenance.html"><button class="btn btn-log">Log Input</button></a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card"><canvas id="chartMachine"></canvas></div>
+    <div class="card"><canvas id="chartCategory"></canvas></div>
+    <div class="card"><canvas id="chartMonth"></canvas></div>
+  </div>
+
+  <script>
+    const { createClient } = supabase;
+    const supabaseUrl = "https://skjtzbldpvmacmotdomr.supabase.co"; 
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNranR6YmxkcHZtYWNtb3Rkb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0Nzk4ODYsImV4cCI6MjA3MzA1NTg4Nn0.u8Zg2k7us_wHnamqplRYZ7rI6ls68zRZ6iLgfitTviM"; 
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    Chart.register(ChartDataLabels);
+
+    const commonOptions = {
+  plugins: {
+    legend: { labels: { color: "white" } },
+    title: { display: true, color: "white" },
+    datalabels: { // Datalabels configuration
+      color: 'white',
+      anchor: 'end',
+      align: 'top',
+      formatter: Math.round, // This formats the data to be a whole number
+      font: {
+        weight: 'bold'
+      }
+    }
+  },
+  scales: { x: { ticks: { color: "white" } }, y: { ticks: { color: "white" } } },
+  responsive: true,
+  maintainAspectRatio: false
+};
+
+    async function loadData() {
+      const { data, error } = await supabaseClient.from("lost_time_maintenance").select("*");
+      if (error) { console.error(error); return; }
+
+      let machineData = {}, categoryData = {}, monthData = {};
+      data.forEach(row => {
+        machineData[row.machine] = (machineData[row.machine]||0) + row.lost_time;
+        categoryData[row.category] = (categoryData[row.category]||0) + row.lost_time;
+        const month = row.date.slice(0,7);
+        monthData[month] = (monthData[month]||0) + row.lost_time;
+      });
+
+      new Chart(document.getElementById("chartMachine"),{
+        type:"bar",
+        data:{ labels:Object.keys(machineData), datasets:[{label:"Lost Time per Machine", data:Object.values(machineData), backgroundColor:"yellow"}] },
+        options:{ ...commonOptions, plugins:{...commonOptions.plugins,title:{display:true,text:"Lost Time per Machine"}} }
+      });
+
+      new Chart(document.getElementById("chartCategory"),{
+        type:"bar",
+        data:{ labels:Object.keys(categoryData), datasets:[{label:"Lost Time per Category", data:Object.values(categoryData), backgroundColor:"violet"}] },
+        options:{ ...commonOptions, plugins:{...commonOptions.plugins,title:{display:true,text:"Lost Time per Category"}} }
+      });
+
+      new Chart(document.getElementById("chartMonth"),{
+        type:"bar",
+        data:{ labels:Object.keys(monthData), datasets:[{label:"Lost Time per Bulan", data:Object.values(monthData), backgroundColor:"cyan"}] },
+        options:{ ...commonOptions, plugins:{...commonOptions.plugins,title:{display:true,text:"Lost Time per Bulan"}} }
+      });
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

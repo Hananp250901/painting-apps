@@ -73,11 +73,13 @@ body {
   }
 }
 .chart-container {
-  background: var(--card-bg);
+  background: var(--card-color);
   border-radius: 12px;
   padding: 15px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  height: 320px;          /* ✅ fix tinggi biar ga manjang */
+  height: 450px;
+  
+  /* Container utama tetap menjadi flexbox column */
   display: flex;
   flex-direction: column;
 }
@@ -87,10 +89,26 @@ body {
   margin-bottom: 10px;
   text-align: center;
   color: var(--secondary-text);
+  flex-shrink: 0;
 }
 
 
 .chart-container canvas {
-  flex: 1;                /* ✅ biar isi penuh */
-  max-height: 100%;       /* batasi supaya ga overflow */
+  max-width: 100%;
+}
+
+.canvas-wrapper {
+  /* Pembungkus ini akan mengisi sisa ruang yang ada */
+  flex: 1; 
+  
+  /* Kunci: Menetapkan konteks posisi dan mencegah penyusutan */
+  position: relative;
+  min-height: 0;
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between; /* Membuat judul di kiri dan tombol di kanan */
+  align-items: center;
+  margin-bottom: 10px; /* Memberi jarak ke grafik di bawahnya */
+  flex-shrink: 0;
 }
