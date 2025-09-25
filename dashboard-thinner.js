@@ -91,6 +91,7 @@ async function loadDashboardData() {
 
 function renderItemThinnerChart(data) {
     const canvas = document.getElementById('itemThinnerUsageChart');
+    const totalElement = document.getElementById('itemChartTotal'); // Ambil elemen total
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
@@ -98,14 +99,21 @@ function renderItemThinnerChart(data) {
 
     if (window.myItemThinnerChart) window.myItemThinnerChart.destroy();
     if (!data || data.length === 0) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.fillText("Tidak ada data", canvas.width/2, canvas.height/2); return;
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.fillText("Tidak ada data", canvas.width/2, canvas.height/2);
+        totalElement.textContent = ''; // Kosongkan total
+        return;
     }
+
+    // Hitung dan tampilkan total
+    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
 
     const usageByItem = new Map();
     data.forEach(item => {
         usageByItem.set(item.namaThinner, (usageByItem.get(item.namaThinner) || 0) + item.qty);
     });
-    
+
     const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
     const labels = sortedData.map(item => item[0]);
     const dividedData = sortedData.map(item => parseFloat((item[1] / 20).toFixed(2)));
@@ -132,27 +140,34 @@ function renderItemThinnerChart(data) {
         }
     });
 }
-
 // ==========================================================
 // INI ADALAH FUNGSI YANG MENYEBABKAN ERROR
 // Pastikan namanya function renderDailyThinnerChart
 // ==========================================================
 function renderDailyThinnerChart(data) {
     const canvas = document.getElementById('dailyThinnerUsageChart');
+    const totalElement = document.getElementById('dailyChartTotal'); // Ambil elemen total
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     document.getElementById('dailyChartTitle').textContent = `Analisis Pemakaian Thinner Harian - ${monthText}`;
 
     if (window.myDailyThinnerChart) window.myDailyThinnerChart.destroy();
-    
+
     if (!data || data.length === 0) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.fillText("Tidak ada data", canvas.width/2, canvas.height/2); return;
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.fillText("Tidak ada data", canvas.width/2, canvas.height/2);
+        totalElement.textContent = ''; // Kosongkan total
+        return;
     }
+
+    // Hitung dan tampilkan total
+    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian Bulan Ini: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
 
     const dailyUsage = new Map();
     data.forEach(item => { dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty); });
-    
+
     const sorted = new Map([...dailyUsage.entries()].sort());
     const labels = Array.from(sorted.keys()).map(d => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
     const dailyData = Array.from(sorted.values());

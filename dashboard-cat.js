@@ -106,6 +106,7 @@ async function loadDashboardData() {
 // ==========================================================
 function renderItemUsageChart(data) {
     const canvas = document.getElementById('itemUsageChart');
+    const totalElement = document.getElementById('itemChartTotal'); 
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
@@ -118,6 +119,7 @@ function renderItemUsageChart(data) {
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; 
         return;
     }
 
@@ -129,14 +131,17 @@ function renderItemUsageChart(data) {
     const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
 
     const labels = sortedData.map(item => item[0]);
-    
-    // === PERUBAHAN DI SINI ===
-    // Sekarang kedua dataset (liter dan pail) dihitung dari hasil pembagian 20
     const originalLiterData = sortedData.map(item => item[1]);
-    const dividedData = originalLiterData.map(total => parseFloat((total / 20).toFixed(2)));
+
+    // --- PERUBAHAN DI SINI UNTUK TOTAL ---
+    const totalUsage = originalLiterData.reduce((sum, value) => sum + value, 0);
+    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
+    // --- AKHIR PERUBAHAN TOTAL ---
     
-    const literData = dividedData; // Data untuk bar chart
-    const pailData = dividedData;  // Data untuk line chart
+    const dividedData = originalLiterData.map(total => parseFloat((total / 20).toFixed(2)));
+    const literData = dividedData;
+    const pailData = dividedData;
 
     window.myItemChart = new Chart(ctx, {
         type: 'bar',
@@ -205,6 +210,7 @@ function renderItemUsageChart(data) {
 
 function renderDailyUsageChart(data) {
     const canvas = document.getElementById('dailyUsageChart');
+    const totalElement = document.getElementById('dailyChartTotal'); // Ambil elemen total
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
@@ -213,22 +219,29 @@ function renderDailyUsageChart(data) {
     if (window.myDailyChart) {
         window.myDailyChart.destroy();
     }
-    
+
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // Kosongkan total jika tidak ada data
         return;
     }
 
     const dailyUsage = new Map();
     data.forEach(item => { dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty); });
-    
+
     const sorted = new Map([...dailyUsage.entries()].sort());
     const labels = Array.from(sorted.keys()).map(dateKey => {
         const tgl = new Date(dateKey + 'T00:00:00');
         return tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     });
     const dailyData = Array.from(sorted.values());
+
+    // === BARIS TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ===
+    const totalUsage = dailyData.reduce((sum, value) => sum + value, 0);
+    totalElement.textContent = `Total Pemakaian Bulan Ini: ${totalUsage.toLocaleString('id-ID')} Liter`;
+    // === AKHIR BARIS TAMBAHAN ===
+
 
     window.myDailyChart = new Chart(ctx, {
         type: 'bar',

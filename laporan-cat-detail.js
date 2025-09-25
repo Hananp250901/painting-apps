@@ -154,6 +154,7 @@ function renderChart(data) {
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     const catNameText = document.getElementById('catNameFilter').value;
     const chartTitle = `Analisis Pemakaian ${catNameText} - ${monthText}`;
+    const totalElement = document.getElementById('chartTotal'); // Ambil elemen total
     
     document.getElementById('chartTitle').textContent = chartTitle;
 
@@ -165,8 +166,15 @@ function renderChart(data) {
         ctx.fillStyle = "#888";
         ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk item ini di bulan terpilih.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // Kosongkan total jika tidak ada data
         return;
     }
+
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
+    // --- AKHIR BLOK TAMBAHAN ---
 
     const dailyUsage = new Map();
     data.forEach(item => {
@@ -192,7 +200,7 @@ function renderChart(data) {
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
-                title: { display: true, text: `Analisis Pemakaian ${catNameText} - ${monthText}`, font: { size: 18 } }, // Judul utama sudah di atas chart
+                title: { display: true, text: `Analisis Pemakaian ${catNameText} - ${monthText}`, font: { size: 18 } },
                 datalabels: {
                     anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v + ' L' : '',
                     color: '#333', font: { weight: 'bold' }

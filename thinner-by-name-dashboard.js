@@ -56,16 +56,16 @@ async function populateMonthFilter() {
 // --- FUNGSI UNTUK MEMUAT, MENGOLAH, DAN MERENDER GRAFIK ---
 async function loadChartData() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    const totalElement = document.getElementById('chartTotalDisplay'); // --- BARIS TAMBAHAN ---
     if (!selectedMonth) return;
 
     const [year, month] = selectedMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     
-    // 1. Ambil data dari tabel pemakaian_thinner
     const { data, error } = await supabase
         .from('pemakaian_thinner')
-        .select('namaThinner, qty') // Ambil kolom namaThinner
+        .select('namaThinner, qty') 
         .gte('tanggal', startDate)
         .lte('tanggal', endDate);
 
@@ -81,25 +81,28 @@ async function loadChartData() {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.font = "16px Poppins"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // --- BARIS TAMBAHAN ---
         return;
     }
 
-    // 2. Agregasi Data: Kelompokkan dan jumlahkan qty per namaThinner
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian Bulan Ini: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
+    // --- AKHIR BLOK TAMBAHAN ---
+
     const usageByName = new Map();
     data.forEach(item => {
         usageByName.set(item.namaThinner, (usageByName.get(item.namaThinner) || 0) + item.qty);
     });
 
-    // 3. Urutkan Data: Dari qty tertinggi ke terendah
     const sortedData = Array.from(usageByName.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
 
-    // 4. Siapkan data untuk grafik
-    const labels = sortedData.map(item => item[0]); // Nama Thinner
-    const chartData = sortedData.map(item => item[1]); // Total Qty
+    const labels = sortedData.map(item => item[0]); 
+    const chartData = sortedData.map(item => item[1]); 
 
-    // 5. Render Grafik
     renderSortedChart(labels, chartData);
 }
 

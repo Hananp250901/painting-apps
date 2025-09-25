@@ -165,6 +165,7 @@ async function populateMonthFilter() {
 
 function renderChart(data) {
     const usageChart = document.getElementById('usageChart');
+    const totalElement = document.getElementById('chartTotal'); // Ambil elemen total
     if (!usageChart) return;
 
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
@@ -178,14 +179,22 @@ function renderChart(data) {
     
     const ctx = usageChart.getContext('2d');
     if (window.myThinnerChart) window.myThinnerChart.destroy();
+    
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.font = "16px Poppins, sans-serif";
         ctx.fillStyle = "#888";
         ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk item ini di bulan terpilih.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // Kosongkan total
         return;
     }
+
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
+    // --- AKHIR BLOK TAMBAHAN ---
 
     const dailyUsage = new Map();
     data.forEach(item => { dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty); });

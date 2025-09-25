@@ -50,6 +50,7 @@ async function populateMonthFilter() {
 
 async function loadChartData() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    const totalElement = document.getElementById('chartTotalDisplay'); // --- BARIS TAMBAHAN ---
     if (!selectedMonth) return;
 
     const [year, month] = selectedMonth.split('-').map(Number);
@@ -70,8 +71,14 @@ async function loadChartData() {
     if (data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // --- BARIS TAMBAHAN ---
         return;
     }
+
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+    totalElement.textContent = `Total Pemakaian Bulan Ini: ${totalUsage.toLocaleString('id-ID')} Liter`;
+    // --- AKHIR BLOK TAMBAHAN ---
 
     const usageByName = new Map();
     data.forEach(item => {
