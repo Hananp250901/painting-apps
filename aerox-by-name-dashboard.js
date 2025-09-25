@@ -46,14 +46,15 @@ async function populateMonthFilter() {
 
 async function loadChartData() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    const totalElement = document.getElementById('pageTotalDisplay'); // Ambil elemen total
     if (!selectedMonth) return;
+
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
 
     const [year, month] = selectedMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     
-    // Ambil juga kolom 'consumer'
     const { data, error } = await supabase
         .from('pemakaian_aerox')
         .select('namaAerox, qty, consumer')
@@ -62,14 +63,21 @@ async function loadChartData() {
 
     if (error) { console.error("Gagal memuat data:", error); return; }
 
-    // Hancurkan chart lama
     if (myAeroxChartByName) myAeroxChartByName.destroy();
     if (myAeroxDonutChart) myAeroxDonutChart.destroy();
     
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    if (!data || data.length === 0) {
+        totalElement.textContent = 'Total: 0 Pcs';
+    } else {
+        const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+        totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Pcs`;
+    }
+    // --- AKHIR BLOK TAMBAHAN ---
+
     document.getElementById('chartTitle').textContent = `Peringkat Pemakaian Aerox - ${monthText}`;
     document.getElementById('donutChartTitle').textContent = `Pemakaian Aerox berdasarkan Consumer - ${monthText}`;
 
-    // Proses data untuk Bar Chart (Ranking Aerox)
     const usageByName = new Map();
     data.forEach(item => {
         usageByName.set(item.namaAerox, (usageByName.get(item.namaAerox) || 0) + item.qty);
@@ -80,7 +88,6 @@ async function loadChartData() {
         sortedData.map(item => item[1])
     );
 
-    // Proses data untuk Donut Chart (by Consumer)
     const usageByConsumer = new Map();
     data.forEach(item => {
         if(item.consumer) {

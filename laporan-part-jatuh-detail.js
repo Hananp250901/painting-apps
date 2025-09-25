@@ -161,6 +161,7 @@ function displayLogPage() {
 // Chart
 function renderChart(data) {
     const ctx = document.getElementById('usageChart').getContext('2d');
+    const totalElement = document.getElementById('chartTotal'); // Ambil elemen total
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     const partNameText = document.getElementById('partNameFilter').value;
     const chartTitle = `Part Gagal Proses ${partNameText} - ${monthText}`;
@@ -175,8 +176,14 @@ function renderChart(data) {
         ctx.fillStyle = "#888";
         ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk item ini di bulan terpilih.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // Kosongkan total
         return;
     }
+
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    const totalUsage = data.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+    totalElement.textContent = `Total : ${totalUsage.toLocaleString('id-ID')} Pcs`;
+    // --- AKHIR BLOK TAMBAHAN ---
 
     const dailyUsage = new Map();
     data.forEach(item => { dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty); });

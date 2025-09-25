@@ -99,11 +99,14 @@ async function populateMonthFilter() {
 
 async function loadDashboardData() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    const totalElement = document.getElementById('chartTotal'); // Ambil elemen total
     if (!selectedMonth) return;
+
     const [year, month] = selectedMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     const { data, error } = await supabase.from('pemakaian_aerox').select('*').gte('tanggal', startDate).lte('tanggal', endDate).order('tanggal', { ascending: true });
+    
     if (error) { console.error("Gagal memuat data:", error); return; }
     
     fullLogData = data;
@@ -111,12 +114,19 @@ async function loadDashboardData() {
     
     const ctx = document.getElementById('usageChart').getContext('2d');
     if (window.myChart) window.myChart.destroy();
+    
     if (data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.font = "16px Poppins"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // Kosongkan total jika tidak ada data
         return;
     }
+
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    const totalUsage = fullLogData.reduce((sum, item) => sum + item.qty, 0);
+    totalElement.textContent = `Total Pemakaian Bulan Ini: ${totalUsage.toLocaleString('id-ID')} Pcs`;
+    // --- AKHIR BLOK TAMBAHAN ---
 
     const dailyUsage = new Map();
     data.forEach(item => {
@@ -131,7 +141,6 @@ async function loadDashboardData() {
     });
     renderChart(labels, dailyData);
 }
-
 
 function getFilteredData() {
     const nameFilter = document.querySelector('input[data-filter="nama"]')?.value.trim();

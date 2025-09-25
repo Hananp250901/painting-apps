@@ -126,7 +126,7 @@
     <section class="main-content">
         <i class='bx bx-menu' id="sidebar-toggle"></i>
         <div class="header-content">
-            <h1>Laporan Peringkat Part Jatuh</h1>
+            <h1>Laporan Peringkat Part Gagal Proses</h1>
             <div class="filter-wrapper">
                 <label for="monthFilter">Tampilkan Data Bulan:</label>
                 <select id="monthFilter"></select>
@@ -135,8 +135,10 @@
         <div class="chart-container">
             <div class="chart-header">
                 <h4 id="chartTitle"></h4>
+                
                 <button id="downloadChartButton" class="action-button"><i class='bx bxs-download'></i> Download Gambar</button>
             </div>
+            <div id="pageTotalDisplay" style="font-size: 1.5em; font-weight: bold; color: #333; margin-left: auto; align-self: center;"></div>
             <div class="chart-wrapper">
                 <canvas id="rankingChart"></canvas>
             </div>

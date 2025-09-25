@@ -116,19 +116,18 @@ async function populateMonthFilter() {
 
 async function loadDashboardData() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    const totalElement = document.getElementById('chartTotal'); // Ambil elemen total
     if (!selectedMonth) return;
+    
     const [year, month] = selectedMonth.split('-').map(Number);
+    // Koreksi kecil untuk endDate: Bulan di JS adalah 0-11, jadi 'month' langsung, bukan 'month - 1'
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
 
-    let endDateObj = new Date(year, month, 1);
-    endDateObj.setDate(endDateObj.getDate() - 1);
-    const endDate = endDateObj.toISOString().split('T')[0];
-
-    // ambil data per 1000 rows (looping sampai habis)
+    // Kode pengambilan data Anda sudah baik, kita pertahankan
     let allData = [];
     let from = 0, to = 999;
     let done = false;
-
     while (!done) {
         const { data, error } = await supabase
             .from('pemakaian_part_jatuh')
@@ -138,34 +137,29 @@ async function loadDashboardData() {
             .order('tanggal', { ascending: true })
             .range(from, to);
 
-        if (error) {
-            console.error("Gagal load data:", error);
-            break;
-        }
-
-        if (data.length === 0) {
-            done = true;
-        } else {
+        if (error) { console.error("Gagal load data:", error); break; }
+        if (data.length === 0) { done = true; } 
+        else {
             allData = allData.concat(data);
-            if (data.length < 1000) {
-                done = true;
-            } else {
-                from += 1000;
-                to += 1000;
-            }
+            if (data.length < 1000) { done = true; } 
+            else { from += 1000; to += 1000; }
         }
     }
 
-    console.log("Total rows loaded:", allData.length);
-
     fullLogData = allData;
-
-    const totalPages = Math.ceil(fullLogData.length / rowsPerPage) || 1;
-    currentPage = totalPages;
-    displayLogPage();
+    displayLogPage(); // Pindahkan displayLogPage setelah fullLogData diisi
 
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     document.getElementById('chartTitle').textContent = `Analisis Gagal Proses - ${monthText}`;
+
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    if (!fullLogData || fullLogData.length === 0) {
+        totalElement.textContent = ''; // Kosongkan jika tidak ada data
+    } else {
+        const totalUsage = fullLogData.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+        totalElement.textContent = `Total Gagal Proses: ${totalUsage.toLocaleString('id-ID')} Pcs`;
+    }
+    // --- AKHIR BLOK TAMBAHAN ---
 
     const ctx = document.getElementById('usageChart').getContext('2d');
     if (currentChart) currentChart.destroy();

@@ -143,13 +143,14 @@ function displayLogPage() {
 
 function renderChart(data) {
     const ctx = document.getElementById('usageChart').getContext('2d');
+    const totalElement = document.getElementById('chartTotal'); // Ambil elemen total
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    const partNameText = document.getElementById('partNameFilter').value; // UBAH: ID filter
+    const partNameText = document.getElementById('partNameFilter').value; 
     const chartTitle = `Analisis Pemakaian ${partNameText} - ${monthText}`;
     
     document.getElementById('chartTitle').textContent = chartTitle;
 
-    if (window.myAeroxChart) window.myAeroxChart.destroy(); // UBAH: Nama variabel chart
+    if (window.myAeroxChart) window.myAeroxChart.destroy();
     
     if (data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -157,8 +158,14 @@ function renderChart(data) {
         ctx.fillStyle = "#888";
         ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk item ini di bulan terpilih.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; // Kosongkan total
         return;
     }
+
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
+    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Pcs`;
+    // --- AKHIR BLOK TAMBAHAN ---
 
     const dailyUsage = new Map();
     data.forEach(item => { dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty); });
@@ -169,7 +176,7 @@ function renderChart(data) {
         dailyData.push(totalQty);
     });
 
-    window.myAeroxChart = new Chart(ctx, { // UBAH: Nama variabel chart
+    window.myAeroxChart = new Chart(ctx, { 
         type: 'bar',
         data: {
             labels,
@@ -182,13 +189,13 @@ function renderChart(data) {
             responsive: true, maintainAspectRatio: false,
             backgroundColor: '#FFFFFF',
             plugins: {
-                title: { display: true, text: `Analisis Pemakaian ${partNameText} - ${monthText}`, font: { size: 18 } }, // Judul utama sudah di atas chart
+                title: { display: true, text: `Analisis Pemakaian ${partNameText} - ${monthText}`, font: { size: 18 } },
                 datalabels: {
-                    anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v + ' Pcs' : '', // UBAH: Satuan ke Pcs
+                    anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v + ' Pcs' : '',
                     color: '#333', font: { weight: 'bold' }
                 }
             },
-            scales: { y: { beginAtZero: true, title: { display: true, text: 'Total Kuantitas (Pcs)' } } } // UBAH: Satuan ke Pcs
+            scales: { y: { beginAtZero: true, title: { display: true, text: 'Total Kuantitas (Pcs)' } } } 
         },
         plugins: [ChartDataLabels]
     });

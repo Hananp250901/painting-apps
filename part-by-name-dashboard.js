@@ -53,64 +53,73 @@ async function populateMonthFilter() {
     }
 }
 
+// GANTI DENGAN FUNGSI YANG SUDAH DIPERBAIKI INI
 async function loadChartData() {
     const selectedMonth = document.getElementById('monthFilter').value;
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
+    const totalElement = document.getElementById('pageTotalDisplay');
     if (!selectedMonth) return;
 
     const [year, month] = selectedMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     
-    // Mengubah 'nama' menjadi 'shift' sesuai permintaan
-    const { data, error } = await supabase
-        .from('pemakaian_part_jatuh')
-        .select('namaPart, qty, shift') 
-        .gte('tanggal', startDate)
-        .lte('tanggal', endDate);
+    let allData = [];
+    let from = 0, to = 999;
+    let done = false;
+    while (!done) {
+        const { data, error } = await supabase
+            .from('pemakaian_part_jatuh')
+            .select('*')
+            .gte('tanggal', startDate)
+            .lte('tanggal', endDate)
+            .order('tanggal', { ascending: true })
+            .range(from, to);
 
-    if (error) {
-        console.error("Gagal memuat data:", error);
-        return;
+        if (error) { console.error("Gagal memuat data:", error); break; }
+        if (data.length > 0) { allData = allData.concat(data); }
+        if (data.length < 1000) { done = true; } 
+        else { from += 1000; to += 1000; }
     }
-    
+
     if (currentChart) currentChart.destroy();
     if (currentDonutChart) currentDonutChart.destroy();
 
-    document.getElementById('chartTitle').textContent = `Peringkat Part Gagal Proses - ${monthText}`;
-    document.getElementById('donutChartTitle').textContent = `Part Gagal Proses by leader - ${monthText}`;
-
-    if (data.length === 0) {
-        const barCtx = document.getElementById('rankingChart').getContext('2d');
-        const donutCtx = document.getElementById('donutChartByName').getContext('2d');
-        barCtx.clearRect(0, 0, barCtx.canvas.width, barCtx.canvas.height);
-        barCtx.fillText("Tidak ada data untuk bulan ini.", barCtx.canvas.width / 2, barCtx.canvas.height / 2);
-        donutCtx.clearRect(0, 0, donutCtx.canvas.width, donutCtx.canvas.height);
-        donutCtx.fillText("Tidak ada data untuk bulan ini.", donutCtx.canvas.width / 2, donutCtx.canvas.height / 2);
-        return;
+    if (!allData || allData.length === 0) {
+        totalElement.textContent = 'Total: 0 Pcs';
+    } else {
+        const totalUsage = allData.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+        totalElement.textContent = `Total : ${totalUsage.toLocaleString('id-ID')} Pcs`;
     }
 
-    // --- Proses Data untuk Grafik Batang (Peringkat Part) ---
+    document.getElementById('chartTitle').textContent = `Peringkat Part Gagal Proses - ${monthText}`;
+    document.getElementById('donutChartTitle').textContent = `Part Gagal Proses by Shift - ${monthText}`;
+
+    if (allData.length === 0) {
+        const barCtx = document.getElementById('rankingChart').getContext('2d');
+        const donutCtx = document.getElementById('donutChartByName').getContext('2d');
+        barCtx.clearRect(0, 0, barCtx.canvas.width, barCtx.canvas.height); barCtx.fillText("Tidak ada data.", barCtx.canvas.width/2, barCtx.canvas.height/2);
+        donutCtx.clearRect(0, 0, donutCtx.canvas.width, donutCtx.canvas.height); donutCtx.fillText("Tidak ada data.", donutCtx.canvas.width/2, donutCtx.canvas.height/2);
+        return;
+    }
+    
+    // --- PERBAIKAN DI SINI ---
     const usageByPartName = new Map();
-    data.forEach(item => {
+    allData.forEach(item => { // Menggunakan 'allData' bukan 'data'
         usageByPartName.set(item.namaPart, (usageByPartName.get(item.namaPart) || 0) + item.qty);
     });
     const sortedPartData = Array.from(usageByPartName.entries()).sort((a, b) => b[1] - a[1]).slice(0, 15);
-    const barLabels = sortedPartData.map(item => item[0]);
-    const barChartData = sortedPartData.map(item => item[1]);
-    renderSortedChart(barLabels, barChartData);
+    renderSortedChart(sortedPartData.map(item => item[0]), sortedPartData.map(item => item[1]));
 
-    // --- Proses Data untuk Grafik Donat (Berdasarkan Shift) ---
+    // --- DAN PERBAIKAN DI SINI ---
     const usageByShift = new Map();
-    data.forEach(item => {
+    allData.forEach(item => { // Menggunakan 'allData' bukan 'data'
         if (item.shift) {
              usageByShift.set(item.shift, (usageByShift.get(item.shift) || 0) + item.qty);
         }
     });
     const sortedShiftData = Array.from(usageByShift.entries()).sort((a, b) => b[1] - a[1]);
-    const donutLabels = sortedShiftData.map(item => item[0]);
-    const donutChartData = sortedShiftData.map(item => item[1]);
-    renderDonutChart(donutLabels, donutChartData);
+    renderDonutChart(sortedShiftData.map(item => `Shift ${item[0]}`), sortedShiftData.map(item => item[1]));
 }
 
 function renderSortedChart(labels, data) {

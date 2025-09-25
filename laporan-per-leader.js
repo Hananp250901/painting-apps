@@ -86,31 +86,52 @@ async function loadAllChartData() {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     
-    const { data, error } = await supabase
-        .from('pemakaian_part_jatuh')
-        .select('namaPart, qty, shift') 
-        .gte('tanggal', startDate)
-        .lte('tanggal', endDate);
+    // --- PERBAIKAN: Menambahkan loop untuk mengambil semua data ---
+    let allData = [];
+    let from = 0, to = 999;
+    let done = false;
+    while (!done) {
+        const { data, error } = await supabase
+            .from('pemakaian_part_jatuh')
+            .select('*') // Mengambil semua kolom
+            .gte('tanggal', startDate)
+            .lte('tanggal', endDate)
+            .order('tanggal', { ascending: true })
+            .range(from, to);
 
-    if (error) {
-        console.error("Gagal memuat data:", error);
-        return;
+        if (error) { console.error("Gagal memuat data:", error); break; }
+        if (data.length > 0) { allData = allData.concat(data); }
+        if (data.length < 1000) { done = true; } 
+        else { from += 1000; to += 1000; }
     }
+    // --- AKHIR PERBAIKAN ---
     
     if (chartSunarno) chartSunarno.destroy();
     if (chartWahyuDedi) chartWahyuDedi.destroy();
     if (chartNurAhmad) chartNurAhmad.destroy();
 
-    processAndRenderLeaderData(data, 'SUNARNO', 'chartSunarno', 'titleSunarno', monthText);
-    processAndRenderLeaderData(data, 'WAHYU DEDI', 'chartWahyuDedi', 'titleWahyuDedi', monthText);
-    processAndRenderLeaderData(data, 'NUR AHMAD', 'chartNurAhmad', 'titleNurAhmad', monthText);
+    // Menambahkan ID elemen total saat memanggil fungsi
+    processAndRenderLeaderData(allData, 'SUNARNO', 'chartSunarno', 'titleSunarno', 'totalSunarno', monthText);
+    processAndRenderLeaderData(allData, 'WAHYU DEDI', 'chartWahyuDedi', 'titleWahyuDedi', 'totalWahyuDedi', monthText);
+    processAndRenderLeaderData(allData, 'NUR AHMAD', 'chartNurAhmad', 'titleNurAhmad', 'totalNurAhmad', monthText);
 }
 
-function processAndRenderLeaderData(sourceData, leaderName, canvasId, titleId, monthText) {
+function processAndRenderLeaderData(sourceData, leaderName, canvasId, titleId, totalId, monthText) {
     document.getElementById(titleId).textContent = `Peringkat Top 10 Gagal Proses - ${leaderName} - ${monthText}`;
+    const totalElement = document.getElementById(totalId); // Ambil elemen total
     
     const leaderData = sourceData.filter(item => item.shift === leaderName);
     const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    if (!leaderData || leaderData.length === 0) {
+        totalElement.textContent = `Total: 0 Pcs`;
+    } else {
+        const totalForLeader = leaderData.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+        totalElement.textContent = `Total Gagal Proses: ${totalForLeader.toLocaleString('id-ID')} Pcs`;
+    }
+    // --- AKHIR BLOK TAMBAHAN ---
+
     if (leaderData.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.textAlign = 'center';
@@ -132,7 +153,6 @@ function processAndRenderLeaderData(sourceData, leaderName, canvasId, titleId, m
 
     renderLeaderChart(canvasId, labels, chartData, leaderName, monthText);
 }
-
 function renderLeaderChart(canvasId, labels, data, leaderName, monthText) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     
