@@ -6,6 +6,26 @@
     <title>Laporan Part Jatuh per Leader</title>
     <link rel="stylesheet" href="dashboard.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .action-btn { padding: 5px 10px; border: none; border-radius: 5px; color: white; cursor: pointer; margin-right: 5px; font-size: 14px; }
+        .edit-btn { background-color: #f0ad4e; }
+        .edit-btn:hover { background-color: #ec971f; }
+        .delete-btn { background-color: #d9534f; }
+        .delete-btn:hover { background-color: #c9302c; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; }
+        .close-button { font-size: 24px; cursor: pointer; border: none; background: none; }
+        .modal-body form label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .modal-body form input, .modal-body form select { width: 100%; padding: 8px 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; background-color: white; font-size: 14px; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%2...%3C/svg%3E'); background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 12px auto; }
+        .modal-body form input[type="date"] { background-image: none; }
+        .modal-footer { text-align: right; }
+        .modal-footer button { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; }
+        .btn-save { background-color: #337ab7; color: white; }
+        .btn-cancel { background-color: #f4f4f4; color: #333; margin-right: 10px; }
+        .hidden { display: none; }
+    </style>
 </head>
 <body class="dashboard-body">
     <nav class="sidebar">
@@ -22,6 +42,14 @@
     <div class="menu-bar">
         <div class="menu">
             <ul class="menu-links">
+                <li class="nav-link">
+                        <a href="overview-dashboard.html">
+                            <i class='bx bxs-grid-alt icon'></i>
+                            <span class="text nav-text">Dashboard</span>
+                        </a>
+                </li>
+                    <li class="nav-link dropdown">
+                </li>
                 <li class="nav-link dropdown">
                     <div class="dropdown-toggle">
                         <i class='bx bxs-paint-roll icon'></i>
@@ -70,7 +98,7 @@
                 <li class="nav-link dropdown">
                     <div class="dropdown-toggle">
                         <i class='bx bxs-wrench icon'></i>
-                        <span class="text nav-text">PART JATUH</span>
+                        <span class="text nav-text">DEFECTIVE PART</span>
                         <i class='bx bxs-chevron-down arrow'></i>
                     </div>
                     <ul class="submenu">
