@@ -146,46 +146,105 @@ function renderItemThinnerChart(data) {
 // ==========================================================
 function renderDailyThinnerChart(data) {
     const canvas = document.getElementById('dailyThinnerUsageChart');
-    const totalElement = document.getElementById('dailyChartTotal'); // Ambil elemen total
+    const totalElement = document.getElementById('dailyChartTotal');
     if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    document.getElementById('dailyChartTitle').textContent = `Analisis Pemakaian Thinner Harian - ${monthText}`;
+    document.getElementById('dailyChartTitle').textContent = `Analisis Pemakaian Thinner Harian per Shift - ${monthText}`;
 
     if (window.myDailyThinnerChart) window.myDailyThinnerChart.destroy();
 
-    if (!data || data.length === 0) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.fillText("Tidak ada data", canvas.width/2, canvas.height/2);
-        totalElement.textContent = ''; // Kosongkan total
-        return;
-    }
-
-    // Hitung dan tampilkan total
     const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
     const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     totalElement.textContent = `Total Pemakaian Bulan Ini: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
 
-    const dailyUsage = new Map();
-    data.forEach(item => { dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty); });
+    if (!data || data.length === 0) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillText("Tidak ada data untuk bulan ini.", canvas.width / 2, canvas.height / 2);
+        return;
+    }
 
-    const sorted = new Map([...dailyUsage.entries()].sort());
-    const labels = Array.from(sorted.keys()).map(d => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-    const dailyData = Array.from(sorted.values());
+    // --- LOGIKA BARU UNTUK MEMPROSES DATA PER SHIFT ---
+    const usageByDate = new Map();
+    data.forEach(item => {
+        if (!usageByDate.has(item.tanggal)) {
+            usageByDate.set(item.tanggal, { '1': 0, '2': 0, '3': 0 });
+        }
+        const dailyRecord = usageByDate.get(item.tanggal);
+        if (dailyRecord[item.shift] !== undefined) {
+             dailyRecord[item.shift] += item.qty;
+        }
+    });
+
+    const sortedDates = Array.from(usageByDate.keys()).sort();
+    
+    const labels = sortedDates.map(dateKey => {
+        const tgl = new Date(dateKey + 'T00:00:00');
+        return tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    });
+
+    const shift1Data = sortedDates.map(date => usageByDate.get(date)['1'] || 0);
+    const shift2Data = sortedDates.map(date => usageByDate.get(date)['2'] || 0);
+    const shift3Data = sortedDates.map(date => usageByDate.get(date)['3'] || 0);
+    // --- AKHIR LOGIKA BARU ---
 
     window.myDailyThinnerChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels,
-            datasets: [ 
-                { label: 'Total (Bar)', data: dailyData, backgroundColor: 'rgba(37, 117, 252, 0.7)', order: 1 }, 
-                { label: 'Total (Garis)', data: dailyData, type: 'line', borderColor: '#FFA500', tension: 0.3, order: 0, datalabels: { display: false } } 
+            labels: labels,
+            // --- DATASETS BARU UNTUK SETIAP SHIFT ---
+            datasets: [
+                {
+                    label: 'Shift 1',
+                    data: shift1Data,
+                    backgroundColor: '#d9534f', // Merah Tua
+                },
+                {
+                    label: 'Shift 2',
+                    data: shift2Data,
+                    backgroundColor: '#337ab7', // Biru Tua
+                },
+                {
+                    label: 'Shift 3',
+                    data: shift3Data,
+                    backgroundColor: '#5cb85c', // Hijau Tua
+                }
             ]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v + ' L' : '', color: '#333', font: { weight: 'bold' } } },
-            scales: { y: { beginAtZero: true, title: { display: true, text: 'Total Kuantitas (Liter)' } } }
-        }
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Pemakaian Harian per Shift - ${monthText}`
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'center',
+                    align: 'center',
+                    color: '#fff',
+                    font: { weight: 'bold' },
+                    formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null 
+                }
+            },
+            // --- OPSI BARU UNTUK MEMBUAT GRAFIK BERTUMPUK ---
+            scales: {
+                x: {
+                    stacked: true,
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Total Kuantitas (Liter)'
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
