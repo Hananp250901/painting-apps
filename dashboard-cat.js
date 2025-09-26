@@ -314,21 +314,22 @@ function renderDailyUsageChart(data) {
 }
 
 function getFilteredData() {
-    // ... Fungsi ini tidak berubah ...
     const filters = {};
     document.querySelectorAll('input[data-filter]').forEach(input => {
         filters[input.dataset.filter] = input.value.toUpperCase();
     });
 
     return fullLogData.filter(item => {
-        const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { 
-            day: '2-digit', month: 'short', year: 'numeric' 
-        }).toUpperCase();
+        const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+        
+        // BARIS PENTING YANG MENYEBABKAN ERROR TADI ADA DI SINI
+        const partNumber = (item.part_number || '').toUpperCase(); 
 
         return (
             formattedTanggal.includes(filters.tanggal || '') &&
             String(item.shift).toUpperCase().includes(filters.shift || '') &&
             item.namaCat.toUpperCase().includes(filters.nama || '') &&
+            partNumber.includes(filters.part_number || '') && // Baris ini butuh variabel di atas
             String(item.qty).toUpperCase().includes(filters.qty || '')
         );
     });
@@ -350,6 +351,7 @@ function displayLogPage() {
         return `<tr>
                     <td>${tglFormatted}</td>
                     <td>${item.shift}</td>
+                    <td>${item.part_number || '-'}</td>
                     <td>${item.namaCat}</td>
                     <td>${item.qty}</td>
                     <td>
@@ -386,8 +388,8 @@ function updatePaginationControls(totalFiltered) {
 function exportToCSV() {
     // ... Fungsi ini tidak berubah ...
     const data = getFilteredData();
-    let csv = "Tanggal,Shift,Nama Cat,Qty (Liter)\r\n";
-    data.forEach(item => { csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${item.namaCat}",${item.qty}\r\n`; });
+    let csv = "Tanggal,Shift,Part Number,Nama Cat,Qty (Liter)\r\n";
+    data.forEach(item => { csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${partNumber}","${item.namaCat}",${item.qty}\r\n`; });
     const link = document.createElement("a");
     link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
@@ -415,18 +417,15 @@ function downloadChartImage(canvasId, baseFileName) {
 
 // === FUNGSI BARU UNTUK MENGISI DROPDOWN NAMA CAT ===
 async function populateCatDropdown() {
-    // Ganti 'namaCat' atau 'editNamaCat' sesuai dengan ID elemen select Anda
-    const catSelect = document.getElementById('editNamaCat') || document.getElementById('namaCat');
+    const catSelect = document.getElementById('editNamaCat');
     if (!catSelect) return;
+    catSelect.innerHTML = '<option value="">Memuat...</option>';
 
-    catSelect.innerHTML = '<option value="">Memuat nama cat...</option>';
-
-    // --- PERUBAHAN UTAMA DI SINI ---
-    // Mengambil data dari tabel 'master_cat' dan mengurutkannya
+    // Mengambil 'nama' DAN 'part_number'
     const { data, error } = await supabase
-        .from('master_cat') // Mengambil dari tabel master
-        .select('nama')        // Memilih kolom 'nama'
-        .order('nama', { ascending: true }); // Mengurutkan berdasarkan nama
+        .from('master_cat')
+        .select('nama, part_number')
+        .order('nama', { ascending: true });
 
     if (error) {
         console.error('Gagal mengambil daftar master cat:', error);
@@ -434,12 +433,13 @@ async function populateCatDropdown() {
         return;
     }
     
-    // Mengisi dropdown dengan data dari master_cat
     catSelect.innerHTML = '<option value="">-- Pilih Nama Cat --</option>';
     data.forEach(item => {
         const option = document.createElement('option');
-        option.value = item.nama; // Menggunakan item.nama
-        option.textContent = item.nama; // Menampilkan item.nama
+        option.value = item.nama;
+        option.textContent = item.nama;
+        // Baris penting yang menyimpan part number
+        option.dataset.partNumber = item.part_number;
         catSelect.appendChild(option);
     });
 }
@@ -493,6 +493,7 @@ async function editLog(id) {
         document.getElementById('editTanggal').value = data.tanggal;
         document.getElementById('editShift').value = data.shift;
         document.getElementById('editNamaCat').value = data.namaCat;
+        document.getElementById('editPartNumber').value = data.part_number || ''; // <-- ISI PART NUMBER
         document.getElementById('editQty').value = data.qty;
 
         // 3. Tampilkan modal
@@ -552,3 +553,8 @@ async function deleteLog(id, namaCat) {
         }
     }
 }
+document.getElementById('editNamaCat').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const partNumber = selectedOption.dataset.partNumber || '';
+    document.getElementById('editPartNumber').value = partNumber;
+});

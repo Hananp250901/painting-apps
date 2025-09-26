@@ -256,10 +256,14 @@ function getFilteredData() {
 
     return fullLogData.filter(item => {
         const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+        // Menangani jika item.part_number mungkin null (untuk data lama)
+        const partNumber = (item.part_number || '').toUpperCase();
+
         return (
             formattedTanggal.includes(filters.tanggal || '') &&
             String(item.shift).toUpperCase().includes(filters.shift || '') &&
             item.namaThinner.toUpperCase().includes(filters.nama || '') &&
+            partNumber.includes(filters.part_number || '') && // <-- BARIS BARU UNTUK FILTER PART NUMBER
             String(item.qty).toUpperCase().includes(filters.qty || '')
         );
     });
@@ -272,12 +276,12 @@ function displayLogPage() {
     filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || a.shift - b.shift);
     const dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
     
-    // === PERUBAHAN: Tambahkan tombol Edit dan Delete ===
     tableBody.innerHTML = dataToDisplay.map(item => {
         const tgl = new Date(item.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         return `<tr>
                     <td>${tgl}</td>
                     <td>${item.shift}</td>
+                    <td>${item.part_number || '-'}</td>
                     <td>${item.namaThinner}</td>
                     <td>${item.qty}</td>
                     <td>
@@ -285,7 +289,7 @@ function displayLogPage() {
                         <button class="action-btn delete-btn" onclick="deleteLog(${item.id}, '${item.namaThinner.replace(/'/g, "\\'")}')">Delete</button>
                     </td>
                 </tr>`;
-    }).join('') || '<tr><td colspan="5">Tidak ada data yang cocok.</td></tr>'; // Colspan jadi 5
+    }).join('') || '<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>'; // <-- Ganti colspan menjadi 6
     
     updatePaginationControls(filtered.length);
 }
@@ -310,9 +314,12 @@ function updatePaginationControls(totalFiltered) {
 
 function exportToCSV() {
     const data = getFilteredData();
-    let csv = "Tanggal,Shift,Nama Thinner,Qty (Liter)\r\n";
+    // Menambahkan kolom "Part Number" di header CSV
+    let csv = "Tanggal,Shift,Part Number,Nama Thinner,Qty (Liter)\r\n";
     data.forEach(item => {
-        csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${item.namaThinner}",${item.qty}\r\n`;
+        const partNumber = item.part_number || ''; // Pastikan tidak null
+        // Menambahkan data part number di setiap baris
+        csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${partNumber}","${item.namaThinner}",${item.qty}\r\n`;
     });
     const link = document.createElement("a");
     link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
@@ -366,9 +373,10 @@ async function populateThinnerDropdown() {
     if (!thinnerSelect) return;
     thinnerSelect.innerHTML = '<option value="">Memuat...</option>';
     
+    // Ambil 'nama' dan 'part_number' dari tabel master
     const { data, error } = await supabase
-        .from('master_thinner') // Ambil dari tabel master_thinner
-        .select('nama')
+        .from('master_thinner')
+        .select('nama, part_number')
         .order('nama', { ascending: true });
 
     if (error) {
@@ -382,11 +390,13 @@ async function populateThinnerDropdown() {
         const option = document.createElement('option');
         option.value = item.nama;
         option.textContent = item.nama;
+        // Simpan part_number di 'data-part-number' agar bisa diambil nanti
+        option.dataset.partNumber = item.part_number; 
         thinnerSelect.appendChild(option);
     });
 }
 
-// Fungsi untuk menampilkan data di pop-up edit
+// 2. FUNGSI UNTUK MENAMPILKAN DATA SAAT TOMBOL EDIT DIKLIK
 async function editLog(id) {
     const { data, error } = await supabase.from('pemakaian_thinner').select('*').eq('id', id).single();
     if (error) {
@@ -399,11 +409,13 @@ async function editLog(id) {
         document.getElementById('editShift').value = data.shift;
         document.getElementById('editNamaThinner').value = data.namaThinner;
         document.getElementById('editQty').value = data.qty;
+        // Mengisi field part number saat modal pertama kali dibuka
+        document.getElementById('editPartNumber').value = data.part_number || ''; 
         modal.classList.remove('hidden');
     }
 }
 
-// Event listener untuk menyimpan perubahan dari form edit
+// 3. EVENT LISTENER UNTUK MENYIMPAN PERUBAHAN
 editForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const idToUpdate = document.getElementById('editId').value;
@@ -411,6 +423,7 @@ editForm.addEventListener('submit', async (e) => {
         tanggal: document.getElementById('editTanggal').value,
         shift: document.getElementById('editShift').value,
         namaThinner: document.getElementById('editNamaThinner').value,
+        part_number: document.getElementById('editPartNumber').value, // Simpan part number
         qty: document.getElementById('editQty').value,
     };
 
@@ -423,6 +436,19 @@ editForm.addEventListener('submit', async (e) => {
         loadDashboardData();
     }
 });
+
+// 4. EVENT LISTENER AGAR PART NUMBER BERUBAH SECARA OTOMATIS
+document.getElementById('editNamaThinner').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const partNumber = selectedOption.dataset.partNumber || '';
+    document.getElementById('editPartNumber').value = partNumber;
+});
+
+// Fungsi-fungsi lain untuk menutup modal
+function closeEditModal() { modal.classList.add('hidden'); }
+cancelButton.addEventListener('click', closeEditModal);
+closeButton.addEventListener('click', closeEditModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) { closeEditModal(); } });
 
 // Fungsi untuk menghapus data
 async function deleteLog(id, namaThinner) {

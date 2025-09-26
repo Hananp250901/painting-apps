@@ -7,14 +7,7 @@ const addDataForm = document.getElementById('addDataForm');
 const catSelectEl = document.getElementById('namaCat');
 const qtyInput = document.getElementById('qty');
 const tanggalInput = document.getElementById('tanggal');
-
-// Inisialisasi Searchable Dropdown (Choices.js)
-const choices = new Choices(catSelectEl, {
-    searchEnabled: true,
-    itemSelectText: 'Pilih',
-    placeholder: true,
-    placeholderValue: 'Ketik untuk mencari cat...',
-});
+const partNumberInput = document.getElementById('partNumber');
 
 document.addEventListener('DOMContentLoaded', () => {
     tanggalInput.value = new Date().toISOString().split('T')[0];
@@ -23,53 +16,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function populateCatDropdown() {
     try {
-        choices.clearStore();
-        choices.setChoices([{ value: '', label: 'Memuat...', placeholder: true, disabled: true }]);
-
-        // Mengambil dari tabel 'master_cat' dengan kolom 'nama'
-        const { data, error } = await supabase.from('master_cat').select('nama').order('nama');
+        const { data, error } = await supabase.from('master_cat').select('nama, part_number').order('nama');
         if (error) throw error;
-        
-        const choicesData = data.map(item => ({
-            value: item.nama,
-            label: item.nama,
-        }));
 
-        choices.setChoices(choicesData, 'value', 'label', true);
-        choices.setChoiceByValue('');
+        catSelectEl.innerHTML = '<option value=""></option>'; // Opsi kosong untuk placeholder
+        data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.nama;
+            option.textContent = item.nama;
+            option.dataset.partNumber = item.part_number;
+            catSelectEl.appendChild(option);
+        });
 
-    } catch (error) { 
+        // Inisialisasi Select2 setelah opsi ditambahkan
+        $(document).ready(function() {
+            $('#namaCat').select2({
+                placeholder: "-- Pilih Nama Cat --",
+                allowClear: true
+            });
+        });
+
+    } catch (error) {
         console.error("Error mengambil data master cat:", error);
     }
 }
+
+// Event listener untuk Select2 menggunakan jQuery
+$('#namaCat').on('change', function(e) {
+    const selectedOption = $(this).find(':selected');
+    const partNumber = selectedOption.data('part-number') || '';
+    partNumberInput.value = partNumber;
+});
 
 addDataForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const newData = {
         tanggal: tanggalInput.value,
         shift: Number(document.getElementById('shift').value),
-        // Gunakan nama kolom yang benar: namaCat
-        namaCat: choices.getValue(true), 
+        namaCat: catSelectEl.value,
+        part_number: partNumberInput.value,
         qty: Number(qtyInput.value)
     };
 
-    if (!newData.namaCat) { alert("Silakan pilih nama cat."); return; }
+    if (!newData.namaCat) {
+        alert("Silakan pilih nama cat.");
+        return;
+    }
     try {
-        // Simpan ke tabel 'pemakaian_cat'
         const { error } = await supabase.from('pemakaian_cat').insert([newData]);
         if (error) throw error;
-        
+
         const successModal = document.getElementById('successModal');
+        successModal.querySelector('p').textContent = 'Data pemakaian cat telah disimpan.';
         successModal.classList.add('show');
-        
-        // Hanya kosongkan isian ini
-        choices.clearInput();
-        choices.setChoiceByValue('');
+
+        // Reset form, termasuk Select2
+        $('#namaCat').val(null).trigger('change');
+        partNumberInput.value = '';
         qtyInput.value = '';
-        
+
         setTimeout(() => successModal.classList.remove('show'), 2000);
 
-    } catch (error) { 
-        console.error("Error menambahkan data:", error); 
+    } catch (error) {
+        console.error("Error menambahkan data:", error);
     }
 });

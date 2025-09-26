@@ -182,6 +182,7 @@
                         <tr>
                             <th><input type="text" placeholder="Filter tanggal..." data-filter="tanggal" class="table-filter-input"></th>
                             <th><input type="text" placeholder="Filter shift..." data-filter="shift" class="table-filter-input"></th>
+                            <th><input type="text" placeholder="Filter part number..." data-filter="part_number" class="table-filter-input"></th>
                             <th><input type="text" placeholder="Filter nama..." id="logSearchInput" data-filter="nama" class="table-filter-input"></th>
                             <th><input type="text" placeholder="Filter qty..." data-filter="qty" class="table-filter-input"></th>
                             <th></th>
@@ -218,6 +219,9 @@
 
                     <label for="editNamaCat">Nama Cat</label>
                     <select id="editNamaCat" required></select>
+                    
+                    <label for="editPartNumber">Part Number</label>
+                    <input type="text" id="editPartNumber" readonly>
                     
                     <label for="editQty">Qty (Liter)</label>
                     <input type="number" id="editQty" required>
