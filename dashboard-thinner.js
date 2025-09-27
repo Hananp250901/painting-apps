@@ -161,11 +161,13 @@ function renderDailyThinnerChart(data) {
 
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.font = "16px Arial";
+        ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk bulan ini.", canvas.width / 2, canvas.height / 2);
         return;
     }
 
-    // --- LOGIKA BARU UNTUK MEMPROSES DATA PER SHIFT ---
+    // Proses data per shift (SAMA seperti sebelumnya)
     const usageByDate = new Map();
     data.forEach(item => {
         if (!usageByDate.has(item.tanggal)) {
@@ -173,7 +175,7 @@ function renderDailyThinnerChart(data) {
         }
         const dailyRecord = usageByDate.get(item.tanggal);
         if (dailyRecord[item.shift] !== undefined) {
-             dailyRecord[item.shift] += item.qty;
+            dailyRecord[item.shift] += item.qty;
         }
     });
 
@@ -187,28 +189,52 @@ function renderDailyThinnerChart(data) {
     const shift1Data = sortedDates.map(date => usageByDate.get(date)['1'] || 0);
     const shift2Data = sortedDates.map(date => usageByDate.get(date)['2'] || 0);
     const shift3Data = sortedDates.map(date => usageByDate.get(date)['3'] || 0);
-    // --- AKHIR LOGIKA BARU ---
 
+    // Hitung total harian
+    const totalData = sortedDates.map(date => {
+        const dayData = usageByDate.get(date);
+        return (dayData['1'] || 0) + (dayData['2'] || 0) + (dayData['3'] || 0);
+    });
+
+    // === PERUBAHAN UTAMA: KOMBINASI BAR & GARIS seperti cat ===
     window.myDailyThinnerChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'bar', // Tipe utama adalah bar
         data: {
             labels: labels,
-            // --- DATASETS BARU UNTUK SETIAP SHIFT ---
             datasets: [
+                // BAR CHART untuk setiap shift
                 {
                     label: 'Shift 1',
                     data: shift1Data,
-                    backgroundColor: '#d9534f', // Merah Tua
+                    backgroundColor: '#d9534f', // Merah
+                    order: 2
                 },
                 {
                     label: 'Shift 2',
                     data: shift2Data,
-                    backgroundColor: '#337ab7', // Biru Tua
+                    backgroundColor: '#337ab7', // Biru
+                    order: 2
                 },
                 {
                     label: 'Shift 3',
                     data: shift3Data,
-                    backgroundColor: '#5cb85c', // Hijau Tua
+                    backgroundColor: '#5cb85c', // Hijau
+                    order: 2
+                },
+                // LINE CHART untuk total harian
+                {
+                    type: 'line',
+                    label: 'Total Harian',
+                    data: totalData,
+                    borderColor: '#f0ad4e', // Orange
+                    backgroundColor: 'rgba(240, 173, 78, 0.2)',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#f0ad4e',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    tension: 0.1,
+                    order: 1 // Garis di atas bar
                 }
             ]
         },
@@ -218,36 +244,65 @@ function renderDailyThinnerChart(data) {
             plugins: {
                 title: {
                     display: true,
-                    text: `Pemakaian Harian per Shift - ${monthText}`
+                    text: `Pemakaian Harian per Shift - ${monthText}`,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            const pails = (value / 20).toFixed(2);
+                            return `${context.dataset.label}: ${value.toLocaleString('id-ID')} Liter (${pails} Pail)`;
+                        }
+                    }
                 },
                 datalabels: {
                     display: true,
-                    anchor: 'center',
-                    align: 'center',
-                    color: '#fff',
-                    font: { weight: 'bold' },
-                    formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null 
+                    formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null,
+                    // Atur posisi & warna secara dinamis
+                    anchor: (context) => context.dataset.type === 'line' ? 'end' : 'center',
+                    align: (context) => context.dataset.type === 'line' ? 'top' : 'center',
+                    color: (context) => context.dataset.type === 'line' ? '#333' : '#ffffff',
+                    offset: (context) => context.dataset.type === 'line' ? -10 : 0,
+                    font: {
+                        weight: 'bold',
+                        size: 10
+                    }
                 }
             },
-            // --- OPSI BARU UNTUK MEMBUAT GRAFIK BERTUMPUK ---
             scales: {
                 x: {
-                    stacked: true,
+                    stacked: true, // Bar chart ditumpuk
+                    title: {
+                        display: true,
+                        text: 'Tanggal'
+                    }
                 },
                 y: {
-                    stacked: true,
+                    stacked: true, // Bar chart ditumpuk
                     beginAtZero: true,
                     title: {
                         display: true,
                         text: 'Total Kuantitas (Liter)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('id-ID');
+                        }
                     }
                 }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
             }
         },
         plugins: [ChartDataLabels]
     });
 }
-
 function getFilteredData() {
     const filters = {};
     document.querySelectorAll('input[data-filter]').forEach(input => {

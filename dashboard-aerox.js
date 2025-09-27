@@ -99,49 +99,44 @@ async function populateMonthFilter() {
 
 async function loadDashboardData() {
     const selectedMonth = document.getElementById('monthFilter').value;
-    const totalElement = document.getElementById('chartTotal'); // Ambil elemen total
+    const totalElement = document.getElementById('chartTotal');
     if (!selectedMonth) return;
 
     const [year, month] = selectedMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+    
     const { data, error } = await supabase.from('pemakaian_aerox').select('*').gte('tanggal', startDate).lte('tanggal', endDate).order('tanggal', { ascending: true });
     
-    if (error) { console.error("Gagal memuat data:", error); return; }
+    if (error) { 
+        console.error("Gagal memuat data:", error); 
+        return; 
+    }
     
-    fullLogData = data;
+    fullLogData = data || [];
+    currentPage = 1;
     displayLogPage();
     
     const ctx = document.getElementById('usageChart').getContext('2d');
     if (window.myChart) window.myChart.destroy();
     
-    if (data.length === 0) {
+    if (fullLogData.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.font = "16px Poppins"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
+        ctx.font = "16px Poppins"; 
+        ctx.fillStyle = "#888"; 
+        ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
-        totalElement.textContent = ''; // Kosongkan total jika tidak ada data
+        totalElement.textContent = '';
         return;
     }
 
-    // --- BLOK TAMBAHAN UNTUK MENGHITUNG DAN MENAMPILKAN TOTAL ---
+    // Hitung total pemakaian
     const totalUsage = fullLogData.reduce((sum, item) => sum + item.qty, 0);
     totalElement.textContent = `Total Pemakaian Bulan Ini: ${totalUsage.toLocaleString('id-ID')} Pcs`;
-    // --- AKHIR BLOK TAMBAHAN ---
 
-    const dailyUsage = new Map();
-    data.forEach(item => {
-        dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + (item.qty || 1));
-    });
-
-    const labels = [], dailyData = [];
-    const sorted = new Map([...dailyUsage.entries()].sort());
-    sorted.forEach((totalQty, dateKey) => {
-        labels.push(new Date(dateKey).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-        dailyData.push(totalQty);
-    });
-    renderChart(labels, dailyData);
+    // Panggil fungsi renderChart dengan data yang sudah diproses per shift
+    renderChart();
 }
-
 function getFilteredData() {
     const nameFilter = document.querySelector('input[data-filter="nama"]')?.value.trim();
     const shiftFilter = document.querySelector('input[data-filter="shift"]')?.value.trim();
@@ -195,25 +190,137 @@ function displayLogPage() {
 function renderChart(labels, data) {
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     const ctx = document.getElementById('usageChart').getContext('2d');
+    
+    if (window.myChart) window.myChart.destroy();
+
+    // Proses data per shift dari fullLogData
+    const usageByDate = new Map();
+    fullLogData.forEach(item => {
+        if (!usageByDate.has(item.tanggal)) {
+            usageByDate.set(item.tanggal, { '1': 0, '2': 0, '3': 0 });
+        }
+        const dailyRecord = usageByDate.get(item.tanggal);
+        if (dailyRecord[item.shift] !== undefined) {
+            dailyRecord[item.shift] += item.qty;
+        }
+    });
+
+    const sortedDates = Array.from(usageByDate.keys()).sort();
+    
+    const chartLabels = sortedDates.map(dateKey => {
+        const tgl = new Date(dateKey + 'T00:00:00');
+        return tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    });
+
+    const shift1Data = sortedDates.map(date => usageByDate.get(date)['1'] || 0);
+    const shift2Data = sortedDates.map(date => usageByDate.get(date)['2'] || 0);
+    const shift3Data = sortedDates.map(date => usageByDate.get(date)['3'] || 0);
+
+    // Hitung total harian
+    const totalData = sortedDates.map(date => {
+        const dayData = usageByDate.get(date);
+        return (dayData['1'] || 0) + (dayData['2'] || 0) + (dayData['3'] || 0);
+    });
+
+    // === PERUBAHAN UTAMA: KOMBINASI BAR & GARIS seperti cat dan thinner ===
     window.myChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'bar', // Tipe utama adalah bar
         data: {
-            labels,
+            labels: chartLabels,
             datasets: [
-                { label: 'Total Pemakaian (Bar)', data, backgroundColor: 'rgba(255, 99, 132, 0.7)', order: 1 },
-                { label: 'Total Pemakaian (Garis)', data, type: 'line', borderColor: '#FFC107', tension: 0.3, order: 0, datalabels: { display: false } }
+                // BAR CHART untuk setiap shift
+                {
+                    label: 'Shift 1',
+                    data: shift1Data,
+                    backgroundColor: '#d9534f', // Merah
+                    order: 2
+                },
+                {
+                    label: 'Shift 2',
+                    data: shift2Data,
+                    backgroundColor: '#337ab7', // Biru
+                    order: 2
+                },
+                {
+                    label: 'Shift 3',
+                    data: shift3Data,
+                    backgroundColor: '#5cb85c', // Hijau
+                    order: 2
+                },
+                // LINE CHART untuk total harian
+                {
+                    type: 'line',
+                    label: 'Total Harian',
+                    data: totalData,
+                    borderColor: '#f0ad4e', // Orange
+                    backgroundColor: 'rgba(240, 173, 78, 0.2)',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#f0ad4e',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    tension: 0.1,
+                    order: 1 // Garis di atas bar
+                }
             ]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-                title: { display: true, text: `Analisis Pemakaian Aerox - ${monthText}`, font: { size: 18 } },
+                title: { 
+                    display: true, 
+                    text: `Analisis Pemakaian Aerox Harian per Shift - ${monthText}`, 
+                    font: { size: 16, weight: 'bold' } 
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            return `${context.dataset.label}: ${value.toLocaleString('id-ID')} Pcs`;
+                        }
+                    }
+                },
                 datalabels: {
-                    anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v : '',
-                    color: '#333', font: { weight: 'bold' }
+                    display: true,
+                    formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null,
+                    // Atur posisi & warna secara dinamis
+                    anchor: (context) => context.dataset.type === 'line' ? 'end' : 'center',
+                    align: (context) => context.dataset.type === 'line' ? 'top' : 'center',
+                    color: (context) => context.dataset.type === 'line' ? '#333' : '#ffffff',
+                    offset: (context) => context.dataset.type === 'line' ? -10 : 0,
+                    font: {
+                        weight: 'bold',
+                        size: 10
+                    }
                 }
             },
-            scales: { y: { beginAtZero: true, title: { display: true, text: 'Jumlah Pemakaian' } } }
+            scales: {
+                x: {
+                    stacked: true, // Bar chart ditumpuk
+                    title: {
+                        display: true,
+                        text: 'Tanggal'
+                    }
+                },
+                y: {
+                    stacked: true, // Bar chart ditumpuk
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Jumlah Pemakaian (Pcs)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('id-ID');
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            }
         },
         plugins: [ChartDataLabels]
     });
