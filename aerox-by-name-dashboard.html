@@ -30,14 +30,25 @@
 <body class="dashboard-body">
     <nav class="sidebar">
     <header>
-        <div class="image-text">
-            <span class="image"><i class='bx bxs-dashboard'></i></span>
-            <div class="text logo-text">
-                <span class="name">Dasbor</span>
-                <span class="profession">Paint Apps</span>
-            </div>
+        <div class="profile-container">
+        <img id="profileImage">
+        <h4 class="name" id="profileName">Nama Pengguna</h4>
+        <p class="email" id="profileEmail">email@pengguna.com</p>
+        <label for="avatarInput" class="upload-btn">Ganti Foto</label>
+        <input type="file" id="avatarInput" accept="image/png, image/jpeg" hidden>
         </div>
     </header>
+    <div id="editProfileModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-body">
+            <form id="editProfileForm">
+                </form>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" form="editProfileForm" class="btn-save">Simpan Perubahan</button>
+        </div>
+    </div>
+    </div>
 
     <div class="menu-bar">
         <div class="menu">

@@ -470,8 +470,8 @@ async function populateCatDropdown() {
 // === FUNGSI BARU UNTUK EDIT DAN DELETE (DIPERBARUI) ===
 // ==========================================================
 
-const modal = document.getElementById('editCatModal');
-const editForm = document.getElementById('editCatForm');
+const modal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
 const cancelButton = document.getElementById('cancelButton');
 const closeButton = document.querySelector('.close-button');
 
