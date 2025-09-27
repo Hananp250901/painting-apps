@@ -346,15 +346,59 @@ body.form-full-screen .form-container {
     .sidebar.active { left: 0; }
     .main-content { left: 0; width: 100%; }
     #sidebar-toggle { display: block; }
-    .header-content { flex-direction: column; align-items: flex-start; }
-    .filter-wrapper { margin-left: 0; width: 100%; }
-    #monthFilter { width: 100%; }
-    .header-content .action-button { width: 100%; justify-content: center; }
-    .log-header { flex-direction: column; align-items: flex-start; }
-    .search-and-actions { width: 100%; flex-direction: column; }
-    #logSearchInput { width: 100%; }
-    .search-and-actions .action-button { width: 100%; justify-content: center; }
-    .master-cat-container { grid-template-columns: 1fr; }
+    
+    /* PERBAIKAN: Header content dengan tata letak yang lebih baik */
+    .header-content { 
+        flex-direction: row; 
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    /* PERBAIKAN: Filter wrapper dengan lebar yang sesuai */
+    .filter-wrapper { 
+        margin-left: 0; 
+        width: auto;
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    #monthFilter { 
+        width: 100%; 
+        max-width: 200px;
+    }
+    
+    /* PERBAIKAN: Tombol action dengan ukuran yang sesuai */
+    .header-content .action-button { 
+        width: auto; 
+        justify-content: flex-start;
+        min-width: 120px;
+    }
+    
+    .log-header { 
+        flex-direction: column; 
+        align-items: flex-start; 
+    }
+    
+    .search-and-actions { 
+        width: 100%; 
+        flex-direction: column; 
+    }
+    
+    #logSearchInput { 
+        width: 100%; 
+    }
+    
+    .search-and-actions .action-button { 
+        width: 100%; 
+        justify-content: center; 
+    }
+    
+    .master-cat-container { 
+        grid-template-columns: 1fr; 
+    }
+    
     .main-content {
         /* Mengurangi padding di mobile agar tidak terlalu sempit */
         padding: 10px;
@@ -371,16 +415,16 @@ body.form-full-screen .form-container {
         position: relative; /* Wajib agar Chart.js bisa menyesuaikan ukuran */
     }
 
-    .header-content {
-        /* Membuat filter dan tombol menjadi vertikal di mobile */
-        flex-direction: column;
-        align-items: flex-start; /* Rata kiri */
-        gap: 15px; /* Jarak antar elemen */
-    }
-
     .log-container .table-wrapper {
         /* Membuat tabel bisa di-scroll ke samping jika tidak muat */
         overflow-x: auto;
+    }
+    
+    /* PERBAIKAN TAMBAHAN: Style khusus untuk tombol logout */
+    .logout-button {
+        order: 3; /* Pastikan tombol logout di posisi yang tepat */
+        margin-left: auto; /* Dorong ke kanan */
+        white-space: nowrap; /* Hindari teks terpotong */
     }
 }
 

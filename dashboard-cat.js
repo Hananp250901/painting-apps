@@ -251,6 +251,12 @@ function renderDailyUsageChart(data) {
     const shift2Data = sortedDates.map(date => usageByDate.get(date)['2'] || 0);
     const shift3Data = sortedDates.map(date => usageByDate.get(date)['3'] || 0);
 
+    const totalData = sortedDates.map(date => 
+        (usageByDate.get(date)['1'] || 0) +
+        (usageByDate.get(date)['2'] || 0) +
+        (usageByDate.get(date)['3'] || 0)
+    );
+
     window.myDailyChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -259,20 +265,29 @@ function renderDailyUsageChart(data) {
                 {
                     label: 'Shift 1',
                     data: shift1Data,
-                    // --- WARNA BARU YANG LEBIH GELAP ---
-                    backgroundColor: '#d9534f', // Merah Tua
+                    backgroundColor: '#d9534f',
                 },
                 {
                     label: 'Shift 2',
                     data: shift2Data,
-                    // --- WARNA BARU YANG LEBIH GELAP ---
-                    backgroundColor: '#337ab7', // Biru Tua
+                    backgroundColor: '#337ab7',
                 },
                 {
                     label: 'Shift 3',
                     data: shift3Data,
-                    // --- WARNA BARU YANG LEBIH GELAP ---
-                    backgroundColor: '#5cb85c', // Hijau Tua
+                    backgroundColor: '#5cb85c',
+                },
+                {
+                    type: 'line',
+                    label: 'Total Harian',
+                    data: totalData,
+                    borderColor: '#f0ad4e',
+                    backgroundColor: 'rgba(240, 173, 78, 0.2)',
+                    tension: 0.1,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#f0ad4e',
+                    order: -1
                 }
             ]
         },
@@ -280,20 +295,20 @@ function renderDailyUsageChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: `Pemakaian Harian per Shift - ${monthText}`
-                },
+                // --- KODE FINAL UNTUK MENAMPILKAN SEMUA ANGKA ---
                 datalabels: {
                     display: true,
-                    anchor: 'center',
-                    align: 'center',
-                    color: '#fff',
+                    formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null,
+                    // Atur posisi & warna secara dinamis
+                    anchor: (context) => context.dataset.type === 'line' ? 'end' : 'center',
+                    align: (context) => context.dataset.type === 'line' ? 'top' : 'center',
+                    color: (context) => context.dataset.type === 'line' ? '#333' : '#ffffff',
+                    offset: (context) => context.dataset.type === 'line' ? -10 : 0, // Angkat label total sedikit
                     font: {
                         weight: 'bold'
-                    },
-                    formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null 
+                    }
                 }
+                // --- AKHIR DARI KODE FINAL ---
             },
             scales: {
                 x: {
@@ -312,7 +327,6 @@ function renderDailyUsageChart(data) {
         plugins: [ChartDataLabels]
     });
 }
-
 function getFilteredData() {
     const filters = {};
     document.querySelectorAll('input[data-filter]').forEach(input => {
