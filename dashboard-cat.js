@@ -386,17 +386,25 @@ function updatePaginationControls(totalFiltered) {
 }
 
 function exportToCSV() {
-    // ... Fungsi ini tidak berubah ...
     const data = getFilteredData();
+    // Menambahkan header "Part Number" ke CSV
     let csv = "Tanggal,Shift,Part Number,Nama Cat,Qty (Liter)\r\n";
-    data.forEach(item => { csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${partNumber}","${item.namaCat}",${item.qty}\r\n`; });
+    
+    // Perbaikan ada di baris berikutnya: `${item.part_number}`
+    data.forEach(item => {
+        // Menggunakan item.part_number untuk mengambil data yang benar
+        const partNumber = item.part_number || '-'; // Memberi nilai default jika part number null
+        csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${partNumber}","${item.namaCat}",${item.qty}\r\n`;
+    });
+
     const link = document.createElement("a");
     link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     link.setAttribute("download", `Laporan_Cat_${monthText.replace(/ /g, "_")}.csv`);
+    document.body.appendChild(link); // Tambahkan link ke body untuk kompatibilitas browser
     link.click();
+    document.body.removeChild(link); // Hapus link setelah di-klik
 }
-
 function downloadChartImage(canvasId, baseFileName) {
     // ... Fungsi ini tidak berubah ...
     const originalCanvas = document.getElementById(canvasId);
@@ -448,8 +456,8 @@ async function populateCatDropdown() {
 // === FUNGSI BARU UNTUK EDIT DAN DELETE (DIPERBARUI) ===
 // ==========================================================
 
-const modal = document.getElementById('editModal');
-const editForm = document.getElementById('editForm');
+const modal = document.getElementById('editCatModal');
+const editForm = document.getElementById('editCatForm');
 const cancelButton = document.getElementById('cancelButton');
 const closeButton = document.querySelector('.close-button');
 
