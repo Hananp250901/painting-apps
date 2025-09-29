@@ -4,9 +4,9 @@
 :root {
     --blue-primary: #66a6ff;
     --blue-dark: #4a90e2;
-    --grey-light: #f4f7fc;
+    --grey-light: #4a90e2;
     --text-color: #707070;
-    --sidebar-bg: #fff;
+    --sidebar-bg: #ffffff;
     --body-bg: var(--grey-light);
 }
 
@@ -188,11 +188,11 @@
     display: flex; justify-content: space-between; align-items: center;
     width: 100%; flex-wrap: wrap; gap: 15px;
 }
-.header-content h1 { color: #333; font-size: 28px; }
+.header-content h1 { color: #ffffff; font-size: 28px; }
 
 /* --- CHART --- */
 .chart-container {
-    background-color: #fff;
+    background-color: #ffffff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
