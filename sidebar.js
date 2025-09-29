@@ -103,11 +103,18 @@ document.addEventListener('DOMContentLoaded', () => {
   let inactivityTimer;
 
   // Fungsi yang akan dijalankan saat waktu habis
-  const logoutUserAutomatically = async () => {
-    alert("Login ulang pak, soale mbok ana hacker nakal wkwk.");
-    await supabase.auth.signOut();
-    window.location.href = 'index.html';
-  };
+  // sidebar.js
+
+const logoutUserAutomatically = async () => {
+  alert("Login ulang pak, soale mbok ana hacker nakal wkwk.");
+  await supabase.auth.signOut();
+
+  // --- SOLUSI ---
+  // Dapatkan path dasar dari URL saat ini
+  const basePath = window.location.pathname.split('/')[1]; 
+  // Arahkan ke index.html di dalam path dasar tersebut
+  window.location.href = `/${basePath}/index.html`; 
+};
 
   // Fungsi untuk mereset timer
   const resetTimer = () => {
