@@ -120,7 +120,7 @@ const logoutUserAutomatically = async () => {
   const resetTimer = () => {
     clearTimeout(inactivityTimer);
     // Set timer baru ke 30 menit (dalam milidetik)
-    const timeoutDuration = 10 * 1000; 
+    const timeoutDuration = 30 * 60 * 1000; 
     inactivityTimer = setTimeout(logoutUserAutomatically, timeoutDuration);
   };
 
