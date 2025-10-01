@@ -295,7 +295,7 @@ body.form-full-screen .form-container {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 .back-button {
-    align-self: flex-start; text-decoration: none; color: var(--blue-dark);
+    align-self: flex-start; text-decoration: none; color: black;
     font-weight: 500; display: inline-flex; align-items: center;
     gap: 8px; margin-bottom: 20px;
 }
