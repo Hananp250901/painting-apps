@@ -122,7 +122,13 @@ async function loadDashboardData() {
     const [year, month] = selectedMonth.split('-').map(Number);
     // Koreksi kecil untuk endDate: Bulan di JS adalah 0-11, jadi 'month' langsung, bukan 'month - 1'
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+    let nextMonth = month + 1;
+    let nextYear = year;
+    if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear += 1;
+    }
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
     // Kode pengambilan data Anda sudah baik, kita pertahankan
     let allData = [];
@@ -133,7 +139,7 @@ async function loadDashboardData() {
             .from('pemakaian_part_jatuh')
             .select('*')
             .gte('tanggal', startDate)
-            .lte('tanggal', endDate)
+            .lt('tanggal', endDate)
             .order('tanggal', { ascending: true })
             .range(from, to);
 

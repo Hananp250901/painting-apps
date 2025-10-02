@@ -75,9 +75,15 @@ async function loadDashboardData() {
     if (!selectedMonth) return;
     const [year, month] = selectedMonth.split('-').map(Number);
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+    let nextMonth = month + 1;
+    let nextYear = year;
+    if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear += 1;
+    }
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
     
-    const { data, error } = await supabase.from('pemakaian_thinner').select('*').gte('tanggal', startDate).lte('tanggal', endDate).order('tanggal', { ascending: true });
+    const { data, error } = await supabase.from('pemakaian_thinner').select('*').gte('tanggal', startDate).lt('tanggal', endDate).order('tanggal', { ascending: true });
     
     if (error) { console.error("Gagal memuat data thinner:", error); return; }
     
