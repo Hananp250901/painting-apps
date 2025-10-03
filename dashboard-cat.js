@@ -12,7 +12,8 @@ Chart.register(ChartDataLabels);
 
 // Variabel untuk menyimpan instance chart
 window.myDailyChart = null;
-window.myItemChart = null;
+window.myItemChartLiter = null; // Diubah
+window.myItemChartPail = null;  // Diubah
 
 document.addEventListener('DOMContentLoaded', initializeDashboard);
 document.querySelectorAll('input[data-filter]').forEach(input => {
@@ -28,7 +29,10 @@ async function initializeDashboard() {
 
     monthFilter.addEventListener('change', loadDashboardData);
     document.getElementById('downloadCsvButton')?.addEventListener('click', exportToCSV);
-    document.getElementById('downloadItemChartButton')?.addEventListener('click', () => downloadChartImage('itemUsageChart', 'Grafik_Item_Cat'));
+    
+    // === PERUBAHAN DI SINI: DOWNLOAD BUTTON UNTUK DUA GRAFIK ===
+    document.getElementById('downloadItemChartButtonLiter')?.addEventListener('click', () => downloadChartImage('itemUsageChartLiter', 'Grafik_Liter_Cat'));
+    document.getElementById('downloadItemChartButtonPail')?.addEventListener('click', () => downloadChartImage('itemUsageChartPail', 'Grafik_Pail_Cat'));
     document.getElementById('downloadDailyChartButton')?.addEventListener('click', () => downloadChartImage('dailyUsageChart', 'Grafik_Harian_Cat'));
     
     // Pagination listeners
@@ -102,28 +106,32 @@ async function loadDashboardData() {
     currentPage = 1;
     displayLogPage();
     
-    // Panggil kedua fungsi render chart
-    renderItemUsageChart(fullLogData);
+    // === PERUBAHAN DI SINI: PANGGIL SEMUA FUNGSI RENDER CHART ===
+    renderItemUsageChartLiter(fullLogData); // Panggil grafik liter
+    renderItemUsageChartPail(fullLogData);  // Panggil grafik pail
     renderDailyUsageChart(fullLogData);
 }
 
+
 // ==========================================================
-// FUNGSI UNTUK MERENDER GRAFIK PEMAKAIAN PER ITEM (DIPERBARUI)
+// FUNGSI BARU UNTUK GRAFIK PER ITEM (VERSI LITER)
 // ==========================================================
-function renderItemUsageChart(data) {
-    const canvas = document.getElementById('itemUsageChart');
-    const totalElement = document.getElementById('itemChartTotal'); 
-    if (!canvas) return;
+function renderItemUsageChartLiter(data) {
+    const canvas = document.getElementById('itemUsageChartLiter');
+    const totalElement = document.getElementById('itemChartTotalLiter'); 
+    if (!canvas || !totalElement) return;
+
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    document.getElementById('itemChartTitle').textContent = `Monitoring Pemakaian Cat per Pail - ${monthText}`;
+    document.getElementById('itemChartTitleLiter').textContent = `Monitoring Pemakaian Cat per Liter - ${monthText}`;
 
-    if (window.myItemChart) {
-        window.myItemChart.destroy();
+    if (window.myItemChartLiter) {
+        window.myItemChartLiter.destroy();
     }
 
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.textAlign = 'center';
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
         totalElement.textContent = ''; 
         return;
@@ -135,50 +143,28 @@ function renderItemUsageChart(data) {
     });
     
     const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
-
     const labels = sortedData.map(item => item[0]);
-    const originalLiterData = sortedData.map(item => item[1]);
+    const literData = sortedData.map(item => item[1]);
 
-    // --- PERUBAHAN DI SINI UNTUK TOTAL ---
-    const totalUsage = originalLiterData.reduce((sum, value) => sum + value, 0);
-    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
-    // --- AKHIR PERUBAHAN TOTAL ---
+    const totalUsage = literData.reduce((sum, value) => sum + value, 0);
+    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter`;
     
-    const dividedData = originalLiterData.map(total => parseFloat((total / 20).toFixed(2)));
-    const literData = dividedData;
-    const pailData = dividedData;
-
-    window.myItemChart = new Chart(ctx, {
+    window.myItemChartLiter = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [
-                {
-                    label: 'Total (Pail)', // Label diubah
-                    data: literData,
-                    backgroundColor: 'rgba(37, 117, 252, 0.8)',
-                    yAxisID: 'yLiter',
-                    order: 1
-                },
-                {
-                    label: 'Total (Pail)',
-                    data: pailData,
-                    type: 'line',
-                    borderColor: '#FFA500',
-                    backgroundColor: '#FFA500',
-                    tension: 0.1,
-                    yAxisID: 'yPail',
-                    order: 0
-                }
-            ]
+            datasets: [{
+                label: 'Total (Liter)',
+                data: literData,
+                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 datalabels: {
-                    display: (context) => context.dataset.yAxisID === 'yLiter' && context.dataset.data[context.dataIndex] > 0,
+                    display: (context) => context.dataset.data[context.dataIndex] > 0,
                     anchor: 'end',
                     align: 'top',
                     color: '#333',
@@ -188,31 +174,106 @@ function renderItemUsageChart(data) {
             },
             scales: {
                 x: {
-                    ticks: {
-                        autoSkip: false,
-                        maxRotation: 90,
-                        minRotation: 45
-                    }
+                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 45 }
                 },
-                yLiter: {
-                    type: 'linear',
-                    position: 'left',
+                y: {
                     beginAtZero: true,
-                    // === PERUBAHAN DI SINI ===
-                    title: { display: true, text: 'Total Kuantitas (Liter / 20)' }
-                },
-                yPail: {
-                    type: 'linear',
-                    position: 'right',
-                    beginAtZero: true,
-                    title: { display: true, text: 'Jumlah Pail (Qty / 20)' },
-                    grid: { drawOnChartArea: false }
+                    title: { display: true, text: 'Total Kuantitas (Liter)' }
                 }
             }
         },
         plugins: [ChartDataLabels]
     });
 }
+
+// ==========================================================
+// FUNGSI BARU UNTUK GRAFIK PER ITEM (VERSI PAIL)
+// ==========================================================
+function renderItemUsageChartPail(data) {
+    const canvas = document.getElementById('itemUsageChartPail');
+    const totalElement = document.getElementById('itemChartTotalPail'); 
+    if (!canvas || !totalElement) return;
+
+    const ctx = canvas.getContext('2d');
+    const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
+    document.getElementById('itemChartTitlePail').textContent = `Monitoring Pemakaian Cat per Pail - ${monthText}`;
+
+    if (window.myItemChartPail) {
+        window.myItemChartPail.destroy();
+    }
+
+    if (!data || data.length === 0) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.textAlign = 'center';
+        ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; 
+        return;
+    }
+
+    const usageByItem = new Map();
+    data.forEach(item => {
+        usageByItem.set(item.namaCat, (usageByItem.get(item.namaCat) || 0) + item.qty);
+    });
+    
+    const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
+    const labels = sortedData.map(item => item[0]);
+    const originalLiterData = sortedData.map(item => item[1]);
+
+    const totalUsageLiter = originalLiterData.reduce((sum, value) => sum + value, 0);
+    const totalPails = (totalUsageLiter / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian: ${totalUsageLiter.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
+    
+    const pailData = originalLiterData.map(total => parseFloat((total / 20).toFixed(2)));
+
+    window.myItemChartPail = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Total (Pail)',
+                    data: pailData,
+                    backgroundColor: 'rgba(37, 117, 252, 0.8)',
+                    order: 1
+                },
+                {
+                    label: 'Tren (Pail)',
+                    data: pailData,
+                    type: 'line',
+                    borderColor: '#FFA500',
+                    backgroundColor: '#FFA500',
+                    tension: 0.1,
+                    order: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                datalabels: {
+                    display: (context) => context.dataset.order === 1 && context.dataset.data[context.dataIndex] > 0,
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#333',
+                    font: { weight: 'bold' },
+                    formatter: (value) => value.toLocaleString('id-ID'),
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 45 }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Jumlah Pail (Kuantitas / 20)' }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
 
 function renderDailyUsageChart(data) {
     const canvas = document.getElementById('dailyUsageChart');
@@ -233,6 +294,7 @@ function renderDailyUsageChart(data) {
 
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.textAlign = 'center';
         ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
         return;
     }
@@ -301,20 +363,17 @@ function renderDailyUsageChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                // --- KODE FINAL UNTUK MENAMPILKAN SEMUA ANGKA ---
                 datalabels: {
                     display: true,
                     formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null,
-                    // Atur posisi & warna secara dinamis
                     anchor: (context) => context.dataset.type === 'line' ? 'end' : 'center',
                     align: (context) => context.dataset.type === 'line' ? 'top' : 'center',
                     color: (context) => context.dataset.type === 'line' ? '#333' : '#ffffff',
-                    offset: (context) => context.dataset.type === 'line' ? -10 : 0, // Angkat label total sedikit
+                    offset: (context) => context.dataset.type === 'line' ? -10 : 0, 
                     font: {
                         weight: 'bold'
                     }
                 }
-                // --- AKHIR DARI KODE FINAL ---
             },
             scales: {
                 x: {
@@ -341,15 +400,13 @@ function getFilteredData() {
 
     return fullLogData.filter(item => {
         const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-        
-        // BARIS PENTING YANG MENYEBABKAN ERROR TADI ADA DI SINI
         const partNumber = (item.part_number || '').toUpperCase(); 
 
         return (
             formattedTanggal.includes(filters.tanggal || '') &&
             String(item.shift).toUpperCase().includes(filters.shift || '') &&
             item.namaCat.toUpperCase().includes(filters.nama || '') &&
-            partNumber.includes(filters.part_number || '') && // Baris ini butuh variabel di atas
+            partNumber.includes(filters.part_number || '') && 
             String(item.qty).toUpperCase().includes(filters.qty || '')
         );
     });
@@ -359,12 +416,10 @@ function displayLogPage() {
     const tableBody = document.getElementById('logTableBody');
     if (!tableBody) return;
     const filtered = getFilteredData();
-    // Mengurutkan data berdasarkan tanggal terbaru, lalu shift
     filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || a.shift - b.shift);
     
     let dataToDisplay = showAll ? filtered : filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-    // === PERUBAHAN DI SINI UNTUK MENAMBAHKAN TOMBOL ===
     tableBody.innerHTML = dataToDisplay.map(item => {
         const tgl = new Date(item.tanggal + 'T00:00:00');
         const tglFormatted = tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -379,13 +434,12 @@ function displayLogPage() {
                         <button class="action-btn delete-btn" onclick="deleteLog(${item.id}, '${item.namaCat.replace(/'/g, "\\'")}')">Delete</button>
                     </td>
                 </tr>`;
-    }).join('') || '<tr><td colspan="5">Tidak ada data yang cocok.</td></tr>'; // Colspan diubah menjadi 5
+    }).join('') || '<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
     
     updatePaginationControls(filtered.length);
 }
 
 function updatePaginationControls(totalFiltered) {
-    // ... Fungsi ini tidak berubah ...
     const pageInfo = document.getElementById('pageInfo');
     const prevPageButton = document.getElementById('prevPageButton');
     const nextPageButton = document.getElementById('nextPageButton');
@@ -407,13 +461,10 @@ function updatePaginationControls(totalFiltered) {
 
 function exportToCSV() {
     const data = getFilteredData();
-    // Menambahkan header "Part Number" ke CSV
     let csv = "Tanggal,Shift,Part Number,Nama Cat,Qty (Liter)\r\n";
     
-    // Perbaikan ada di baris berikutnya: `${item.part_number}`
     data.forEach(item => {
-        // Menggunakan item.part_number untuk mengambil data yang benar
-        const partNumber = item.part_number || '-'; // Memberi nilai default jika part number null
+        const partNumber = item.part_number || '-';
         csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${partNumber}","${item.namaCat}",${item.qty}\r\n`;
     });
 
@@ -421,12 +472,11 @@ function exportToCSV() {
     link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
     link.setAttribute("download", `Laporan_Cat_${monthText.replace(/ /g, "_")}.csv`);
-    document.body.appendChild(link); // Tambahkan link ke body untuk kompatibilitas browser
+    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link); // Hapus link setelah di-klik
+    document.body.removeChild(link);
 }
 function downloadChartImage(canvasId, baseFileName) {
-    // ... Fungsi ini tidak berubah ...
     const originalCanvas = document.getElementById(canvasId);
     if (!originalCanvas) return;
     const newCanvas = document.createElement('canvas');
@@ -443,13 +493,11 @@ function downloadChartImage(canvasId, baseFileName) {
 }
 
 
-// === FUNGSI BARU UNTUK MENGISI DROPDOWN NAMA CAT ===
 async function populateCatDropdown() {
     const catSelect = document.getElementById('editNamaCat');
     if (!catSelect) return;
     catSelect.innerHTML = '<option value="">Memuat...</option>';
 
-    // Mengambil 'nama' DAN 'part_number'
     const { data, error } = await supabase
         .from('master_cat')
         .select('nama, part_number')
@@ -466,43 +514,30 @@ async function populateCatDropdown() {
         const option = document.createElement('option');
         option.value = item.nama;
         option.textContent = item.nama;
-        // Baris penting yang menyimpan part number
         option.dataset.partNumber = item.part_number;
         catSelect.appendChild(option);
     });
 }
 
-// ==========================================================
-// === FUNGSI BARU UNTUK EDIT DAN DELETE (DIPERBARUI) ===
-// ==========================================================
 
 const modal = document.getElementById('editModal');
 const editForm = document.getElementById('editForm');
 const cancelButton = document.getElementById('cancelButton');
 const closeButton = document.querySelector('.close-button');
 
-// Fungsi untuk menutup modal
 function closeEditModal() {
     modal.classList.add('hidden');
 }
 
-// Tambahkan event listener untuk menutup modal
 cancelButton.addEventListener('click', closeEditModal);
 closeButton.addEventListener('click', closeEditModal);
 modal.addEventListener('click', (e) => {
-    // Tutup modal jika klik di luar area konten
     if (e.target === modal) {
         closeEditModal();
     }
 });
 
-// Fungsi Edit yang diperbarui untuk menampilkan pop-up
 async function editLog(id) {
-    // ... (Kode di dalam fungsi ini tidak perlu diubah, 
-    // karena `document.getElementById('editNamaCat').value = data.namaCat;`
-    // akan secara otomatis memilih opsi yang benar pada dropdown) ...
-
-    // 1. Ambil data spesifik dari Supabase
     const { data, error } = await supabase
         .from('pemakaian_cat')
         .select('*')
@@ -516,25 +551,18 @@ async function editLog(id) {
     }
 
     if (data) {
-        // 2. Isi form di dalam pop-up dengan data yang didapat
         document.getElementById('editId').value = data.id;
         document.getElementById('editTanggal').value = data.tanggal;
         document.getElementById('editShift').value = data.shift;
         document.getElementById('editNamaCat').value = data.namaCat;
-        document.getElementById('editPartNumber').value = data.part_number || ''; // <-- ISI PART NUMBER
+        document.getElementById('editPartNumber').value = data.part_number || '';
         document.getElementById('editQty').value = data.qty;
-
-        // 3. Tampilkan modal
         modal.classList.remove('hidden');
     }
 }
 
 
-// Event listener untuk form submit (menyimpan perubahan)
 editForm.addEventListener('submit', async (e) => {
-    // ... (Kode di dalam fungsi ini juga tidak perlu diubah, 
-    // karena `document.getElementById('editNamaCat').value` 
-    // akan mengambil nilai dari opsi yang terpilih di dropdown) ...
     e.preventDefault(); 
 
     const idToUpdate = document.getElementById('editId').value;
@@ -561,11 +589,9 @@ editForm.addEventListener('submit', async (e) => {
 });
 
 async function deleteLog(id, namaCat) {
-    // Tampilkan konfirmasi sebelum menghapus
     const confirmation = confirm(`Anda yakin ingin menghapus data pemakaian: \n"${namaCat}"?`);
 
     if (confirmation) {
-        // Lakukan proses hapus data di Supabase
         const { error } = await supabase
             .from('pemakaian_cat')
             .delete()
@@ -576,7 +602,6 @@ async function deleteLog(id, namaCat) {
             alert(`Gagal menghapus data: ${error.message}`);
         } else {
             alert('Data berhasil dihapus!');
-            // Muat ulang data untuk memperbarui tabel dan grafik
             loadDashboardData();
         }
     }

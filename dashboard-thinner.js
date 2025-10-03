@@ -12,7 +12,8 @@ Chart.register(ChartDataLabels);
 
 // Variabel untuk menyimpan instance chart
 window.myDailyThinnerChart = null;
-window.myItemThinnerChart = null;
+window.myItemThinnerChartLiter = null; // Diubah
+window.myItemThinnerChartPail = null;  // Diubah
 
 document.addEventListener('DOMContentLoaded', initializeDashboard);
 document.querySelectorAll('input[data-filter]').forEach(input => {
@@ -25,8 +26,12 @@ document.querySelectorAll('input[data-filter]').forEach(input => {
 async function initializeDashboard() {
     document.getElementById('monthFilter')?.addEventListener('change', loadDashboardData);
     document.getElementById('downloadCsvButton')?.addEventListener('click', exportToCSV);
-    document.getElementById('downloadItemChartButton')?.addEventListener('click', () => downloadChartImage('itemThinnerUsageChart', 'Grafik_Item_Thinner'));
+    
+    // === PERUBAHAN DI SINI: DOWNLOAD BUTTON UNTUK DUA GRAFIK ===
+    document.getElementById('downloadItemChartButtonLiter')?.addEventListener('click', () => downloadChartImage('itemThinnerUsageChartLiter', 'Grafik_Liter_Thinner'));
+    document.getElementById('downloadItemChartButtonPail')?.addEventListener('click', () => downloadChartImage('itemThinnerUsageChartPail', 'Grafik_Pail_Thinner'));
     document.getElementById('downloadDailyChartButton')?.addEventListener('click', () => downloadChartImage('dailyThinnerUsageChart', 'Grafik_Harian_Thinner'));
+    
     document.getElementById('prevPageButton')?.addEventListener('click', () => { if (currentPage > 1) { currentPage--; displayLogPage(); } });
     document.getElementById('nextPageButton')?.addEventListener('click', () => { if (currentPage < Math.ceil(getFilteredData().length / rowsPerPage)) { currentPage++; displayLogPage(); } });
     document.getElementById('togglePaginationButton')?.addEventListener('click', () => {
@@ -91,64 +96,175 @@ async function loadDashboardData() {
     currentPage = 1;
     displayLogPage();
     
-    renderItemThinnerChart(fullLogData);
-    renderDailyThinnerChart(fullLogData); // Panggilan ini yang menyebabkan error
+    // === PERUBAHAN DI SINI: PANGGIL SEMUA FUNGSI RENDER CHART ===
+    renderItemThinnerChartLiter(fullLogData); // Panggil grafik liter
+    renderItemThinnerChartPail(fullLogData);  // Panggil grafik pail
+    renderDailyThinnerChart(fullLogData);
 }
 
-function renderItemThinnerChart(data) {
-    const canvas = document.getElementById('itemThinnerUsageChart');
-    const totalElement = document.getElementById('itemChartTotal'); // Ambil elemen total
-    if (!canvas) return;
+// ==========================================================
+// FUNGSI BARU UNTUK GRAFIK PER ITEM (VERSI LITER)
+// ==========================================================
+function renderItemThinnerChartLiter(data) {
+    const canvas = document.getElementById('itemThinnerUsageChartLiter');
+    const totalElement = document.getElementById('itemChartTotalLiter'); 
+    if (!canvas || !totalElement) return;
+
     const ctx = canvas.getContext('2d');
     const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
-    document.getElementById('itemChartTitle').textContent = `Monitoring Pemakaian Thinner per Pail - ${monthText}`;
+    document.getElementById('itemChartTitleLiter').textContent = `Monitoring Pemakaian Thinner per Liter - ${monthText}`;
 
-    if (window.myItemThinnerChart) window.myItemThinnerChart.destroy();
-    if (!data || data.length === 0) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.fillText("Tidak ada data", canvas.width/2, canvas.height/2);
-        totalElement.textContent = ''; // Kosongkan total
-        return;
+    if (window.myItemThinnerChartLiter) {
+        window.myItemThinnerChartLiter.destroy();
     }
 
-    // Hitung dan tampilkan total
-    const totalUsage = data.reduce((sum, item) => sum + item.qty, 0);
-    const totalPails = (totalUsage / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
+    if (!data || data.length === 0) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.textAlign = 'center';
+        ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; 
+        return;
+    }
 
     const usageByItem = new Map();
     data.forEach(item => {
         usageByItem.set(item.namaThinner, (usageByItem.get(item.namaThinner) || 0) + item.qty);
     });
-
+    
     const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
     const labels = sortedData.map(item => item[0]);
-    const dividedData = sortedData.map(item => parseFloat((item[1] / 20).toFixed(2)));
+    const literData = sortedData.map(item => item[1]);
 
-    window.myItemThinnerChart = new Chart(ctx, {
+    const totalUsage = literData.reduce((sum, value) => sum + value, 0);
+    totalElement.textContent = `Total Pemakaian: ${totalUsage.toLocaleString('id-ID')} Liter`;
+    
+    window.myItemThinnerChartLiter = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total (Liter)',
+                data: literData,
+                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                datalabels: {
+                    display: (context) => context.dataset.data[context.dataIndex] > 0,
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#333',
+                    font: { weight: 'bold' },
+                    formatter: (value) => value.toLocaleString('id-ID'),
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 45 }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Total Kuantitas (Liter)' }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+// ==========================================================
+// FUNGSI BARU UNTUK GRAFIK PER ITEM (VERSI PAIL)
+// ==========================================================
+function renderItemThinnerChartPail(data) {
+    const canvas = document.getElementById('itemThinnerUsageChartPail');
+    const totalElement = document.getElementById('itemChartTotalPail'); 
+    if (!canvas || !totalElement) return;
+
+    const ctx = canvas.getContext('2d');
+    const monthText = document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text;
+    document.getElementById('itemChartTitlePail').textContent = `Monitoring Pemakaian Thinner per Pail - ${monthText}`;
+
+    if (window.myItemThinnerChartPail) {
+        window.myItemThinnerChartPail.destroy();
+    }
+
+    if (!data || data.length === 0) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.textAlign = 'center';
+        ctx.fillText("Tidak ada data untuk bulan ini.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+        totalElement.textContent = ''; 
+        return;
+    }
+
+    const usageByItem = new Map();
+    data.forEach(item => {
+        usageByItem.set(item.namaThinner, (usageByItem.get(item.namaThinner) || 0) + item.qty);
+    });
+    
+    const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
+    const labels = sortedData.map(item => item[0]);
+    const originalLiterData = sortedData.map(item => item[1]);
+
+    const totalUsageLiter = originalLiterData.reduce((sum, value) => sum + value, 0);
+    const totalPails = (totalUsageLiter / 20).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = `Total Pemakaian: ${totalUsageLiter.toLocaleString('id-ID')} Liter (${totalPails} Pail)`;
+    
+    const pailData = originalLiterData.map(total => parseFloat((total / 20).toFixed(2)));
+
+    window.myItemThinnerChartPail = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [
-                { label: 'Total (Pail)', data: dividedData, backgroundColor: 'rgba(37, 117, 252, 0.8)', yAxisID: 'yLiter', order: 1 },
-                { label: 'Total (Pail)', data: dividedData, type: 'line', borderColor: '#FFA500', backgroundColor: '#FFA500', yAxisID: 'yPail', order: 0, datalabels: { display: false } }
+                {
+                    label: 'Total (Pail)',
+                    data: pailData,
+                    backgroundColor: 'rgba(37, 117, 252, 0.8)',
+                    order: 1
+                },
+                {
+                    label: 'Tren (Pail)',
+                    data: pailData,
+                    type: 'line',
+                    borderColor: '#FFA500',
+                    backgroundColor: '#FFA500',
+                    tension: 0.1,
+                    order: 0
+                }
             ]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-                datalabels: { anchor: 'end', align: 'top', color: '#333', font: { weight: 'bold' }, formatter: (v) => v.toLocaleString('id-ID') }
+                datalabels: {
+                    display: (context) => context.dataset.order === 1 && context.dataset.data[context.dataIndex] > 0,
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#333',
+                    font: { weight: 'bold' },
+                    formatter: (value) => value.toLocaleString('id-ID'),
+                }
             },
             scales: {
-                x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 45 } },
-                yLiter: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Total Kuantitas (Liter / 20)' } },
-                yPail: { type: 'linear', position: 'right', beginAtZero: true, title: { display: true, text: 'Jumlah Pail (Qty / 20)' }, grid: { drawOnChartArea: false } }
+                x: {
+                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 45 }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Jumlah Pail (Kuantitas / 20)' }
+                }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
+
 // ==========================================================
-// INI ADALAH FUNGSI YANG MENYEBABKAN ERROR
-// Pastikan namanya function renderDailyThinnerChart
+// FUNGSI GRAFIK HARIAN (TETAP SAMA)
 // ==========================================================
 function renderDailyThinnerChart(data) {
     const canvas = document.getElementById('dailyThinnerUsageChart');
@@ -167,13 +283,11 @@ function renderDailyThinnerChart(data) {
 
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.font = "16px Arial";
         ctx.textAlign = "center";
         ctx.fillText("Tidak ada data untuk bulan ini.", canvas.width / 2, canvas.height / 2);
         return;
     }
 
-    // Proses data per shift (SAMA seperti sebelumnya)
     const usageByDate = new Map();
     data.forEach(item => {
         if (!usageByDate.has(item.tanggal)) {
@@ -186,129 +300,42 @@ function renderDailyThinnerChart(data) {
     });
 
     const sortedDates = Array.from(usageByDate.keys()).sort();
-    
-    const labels = sortedDates.map(dateKey => {
-        const tgl = new Date(dateKey + 'T00:00:00');
-        return tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-    });
-
+    const labels = sortedDates.map(dateKey => new Date(dateKey + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
     const shift1Data = sortedDates.map(date => usageByDate.get(date)['1'] || 0);
     const shift2Data = sortedDates.map(date => usageByDate.get(date)['2'] || 0);
     const shift3Data = sortedDates.map(date => usageByDate.get(date)['3'] || 0);
+    const totalData = sortedDates.map(date => (usageByDate.get(date)['1'] || 0) + (usageByDate.get(date)['2'] || 0) + (usageByDate.get(date)['3'] || 0));
 
-    // Hitung total harian
-    const totalData = sortedDates.map(date => {
-        const dayData = usageByDate.get(date);
-        return (dayData['1'] || 0) + (dayData['2'] || 0) + (dayData['3'] || 0);
-    });
-
-    // === PERUBAHAN UTAMA: KOMBINASI BAR & GARIS seperti cat ===
     window.myDailyThinnerChart = new Chart(ctx, {
-        type: 'bar', // Tipe utama adalah bar
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [
-                // BAR CHART untuk setiap shift
-                {
-                    label: 'Shift 1',
-                    data: shift1Data,
-                    backgroundColor: '#d9534f', // Merah
-                    order: 2
-                },
-                {
-                    label: 'Shift 2',
-                    data: shift2Data,
-                    backgroundColor: '#337ab7', // Biru
-                    order: 2
-                },
-                {
-                    label: 'Shift 3',
-                    data: shift3Data,
-                    backgroundColor: '#5cb85c', // Hijau
-                    order: 2
-                },
-                // LINE CHART untuk total harian
-                {
-                    type: 'line',
-                    label: 'Total Harian',
-                    data: totalData,
-                    borderColor: '#f0ad4e', // Orange
-                    backgroundColor: 'rgba(240, 173, 78, 0.2)',
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#f0ad4e',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    tension: 0.1,
-                    order: 1 // Garis di atas bar
-                }
+                { label: 'Shift 1', data: shift1Data, backgroundColor: '#d9534f' },
+                { label: 'Shift 2', data: shift2Data, backgroundColor: '#337ab7' },
+                { label: 'Shift 3', data: shift3Data, backgroundColor: '#5cb85c' },
+                { type: 'line', label: 'Total Harian', data: totalData, borderColor: '#f0ad4e', backgroundColor: 'rgba(240, 173, 78, 0.2)', borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#f0ad4e', tension: 0.1, order: -1 }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: `Pemakaian Harian per Shift - ${monthText}`,
-                    font: {
-                        size: 16,
-                        weight: 'bold'
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const value = context.parsed.y;
-                            const pails = (value / 20).toFixed(2);
-                            return `${context.dataset.label}: ${value.toLocaleString('id-ID')} Liter (${pails} Pail)`;
-                        }
-                    }
-                },
                 datalabels: {
                     display: true,
                     formatter: (value) => value > 0 ? value.toLocaleString('id-ID') : null,
-                    // Atur posisi & warna secara dinamis
                     anchor: (context) => context.dataset.type === 'line' ? 'end' : 'center',
                     align: (context) => context.dataset.type === 'line' ? 'top' : 'center',
                     color: (context) => context.dataset.type === 'line' ? '#333' : '#ffffff',
                     offset: (context) => context.dataset.type === 'line' ? -10 : 0,
-                    font: {
-                        weight: 'bold',
-                        size: 10
-                    }
+                    font: { weight: 'bold' }
                 }
             },
-            scales: {
-                x: {
-                    stacked: true, // Bar chart ditumpuk
-                    title: {
-                        display: true,
-                        text: 'Tanggal'
-                    }
-                },
-                y: {
-                    stacked: true, // Bar chart ditumpuk
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Total Kuantitas (Liter)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value.toLocaleString('id-ID');
-                        }
-                    }
-                }
-            },
-            interaction: {
-                mode: 'index',
-                intersect: false
-            }
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Total Kuantitas (Liter)' } } }
         },
         plugins: [ChartDataLabels]
     });
 }
+
 function getFilteredData() {
     const filters = {};
     document.querySelectorAll('input[data-filter]').forEach(input => {
@@ -317,14 +344,13 @@ function getFilteredData() {
 
     return fullLogData.filter(item => {
         const formattedTanggal = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-        // Menangani jika item.part_number mungkin null (untuk data lama)
         const partNumber = (item.part_number || '').toUpperCase();
 
         return (
             formattedTanggal.includes(filters.tanggal || '') &&
             String(item.shift).toUpperCase().includes(filters.shift || '') &&
             item.namaThinner.toUpperCase().includes(filters.nama || '') &&
-            partNumber.includes(filters.part_number || '') && // <-- BARIS BARU UNTUK FILTER PART NUMBER
+            partNumber.includes(filters.part_number || '') &&
             String(item.qty).toUpperCase().includes(filters.qty || '')
         );
     });
@@ -350,7 +376,7 @@ function displayLogPage() {
                         <button class="action-btn delete-btn" onclick="deleteLog(${item.id}, '${item.namaThinner.replace(/'/g, "\\'")}')">Delete</button>
                     </td>
                 </tr>`;
-    }).join('') || '<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>'; // <-- Ganti colspan menjadi 6
+    }).join('') || '<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
     
     updatePaginationControls(filtered.length);
 }
@@ -375,11 +401,9 @@ function updatePaginationControls(totalFiltered) {
 
 function exportToCSV() {
     const data = getFilteredData();
-    // Menambahkan kolom "Part Number" di header CSV
     let csv = "Tanggal,Shift,Part Number,Nama Thinner,Qty (Liter)\r\n";
     data.forEach(item => {
-        const partNumber = item.part_number || ''; // Pastikan tidak null
-        // Menambahkan data part number di setiap baris
+        const partNumber = item.part_number || '';
         csv += `${new Date(item.tanggal).toLocaleDateString('id-ID')},${item.shift},"${partNumber}","${item.namaThinner}",${item.qty}\r\n`;
     });
     const link = document.createElement("a");
@@ -405,36 +429,28 @@ function downloadChartImage(canvasId, baseFileName) {
     link.click();
 }
 
-// ==========================================================
-// === TAMBAHAN: SEMUA FUNGSI BARU UNTUK FITUR EDIT/DELETE ===
-// ==========================================================
-
 const modal = document.getElementById('editModal');
 const editForm = document.getElementById('editForm');
 const cancelButton = document.getElementById('cancelButton');
 const closeButton = document.querySelector('.close-button');
 
-// Fungsi untuk menutup modal
 function closeEditModal() {
     modal.classList.add('hidden');
 }
 
-// Event listener untuk menutup modal
-cancelButton.addEventListener('click', closeEditModal);
-closeButton.addEventListener('click', closeEditModal);
-modal.addEventListener('click', (e) => {
+cancelButton?.addEventListener('click', closeEditModal);
+closeButton?.addEventListener('click', closeEditModal);
+modal?.addEventListener('click', (e) => {
     if (e.target === modal) {
         closeEditModal();
     }
 });
 
-// Fungsi untuk mengisi dropdown dari master_thinner
 async function populateThinnerDropdown() {
     const thinnerSelect = document.getElementById('editNamaThinner');
     if (!thinnerSelect) return;
     thinnerSelect.innerHTML = '<option value="">Memuat...</option>';
     
-    // Ambil 'nama' dan 'part_number' dari tabel master
     const { data, error } = await supabase
         .from('master_thinner')
         .select('nama, part_number')
@@ -451,13 +467,11 @@ async function populateThinnerDropdown() {
         const option = document.createElement('option');
         option.value = item.nama;
         option.textContent = item.nama;
-        // Simpan part_number di 'data-part-number' agar bisa diambil nanti
         option.dataset.partNumber = item.part_number; 
         thinnerSelect.appendChild(option);
     });
 }
 
-// 2. FUNGSI UNTUK MENAMPILKAN DATA SAAT TOMBOL EDIT DIKLIK
 async function editLog(id) {
     const { data, error } = await supabase.from('pemakaian_thinner').select('*').eq('id', id).single();
     if (error) {
@@ -470,21 +484,19 @@ async function editLog(id) {
         document.getElementById('editShift').value = data.shift;
         document.getElementById('editNamaThinner').value = data.namaThinner;
         document.getElementById('editQty').value = data.qty;
-        // Mengisi field part number saat modal pertama kali dibuka
         document.getElementById('editPartNumber').value = data.part_number || ''; 
         modal.classList.remove('hidden');
     }
 }
 
-// 3. EVENT LISTENER UNTUK MENYIMPAN PERUBAHAN
-editForm.addEventListener('submit', async (e) => {
+editForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const idToUpdate = document.getElementById('editId').value;
     const updatedData = {
         tanggal: document.getElementById('editTanggal').value,
         shift: document.getElementById('editShift').value,
         namaThinner: document.getElementById('editNamaThinner').value,
-        part_number: document.getElementById('editPartNumber').value, // Simpan part number
+        part_number: document.getElementById('editPartNumber').value,
         qty: document.getElementById('editQty').value,
     };
 
@@ -498,20 +510,12 @@ editForm.addEventListener('submit', async (e) => {
     }
 });
 
-// 4. EVENT LISTENER AGAR PART NUMBER BERUBAH SECARA OTOMATIS
-document.getElementById('editNamaThinner').addEventListener('change', function() {
+document.getElementById('editNamaThinner')?.addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
     const partNumber = selectedOption.dataset.partNumber || '';
     document.getElementById('editPartNumber').value = partNumber;
 });
 
-// Fungsi-fungsi lain untuk menutup modal
-function closeEditModal() { modal.classList.add('hidden'); }
-cancelButton.addEventListener('click', closeEditModal);
-closeButton.addEventListener('click', closeEditModal);
-modal.addEventListener('click', (e) => { if (e.target === modal) { closeEditModal(); } });
-
-// Fungsi untuk menghapus data
 async function deleteLog(id, namaThinner) {
     if (confirm(`Anda yakin ingin menghapus data: \n"${namaThinner}"?`)) {
         const { error } = await supabase.from('pemakaian_thinner').delete().match({ id: id });
