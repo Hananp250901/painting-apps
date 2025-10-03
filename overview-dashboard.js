@@ -78,14 +78,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // === Grafik Cat ===
-// === Grafik Cat ===
 function renderCatCharts(data) {
   if (!data) return;
   const usageByItem = new Map();
   data.forEach(item => usageByItem.set(item.namaCat, (usageByItem.get(item.namaCat) || 0) + item.qty));
   const sortedData = Array.from(usageByItem.entries()).sort((a, b) => b[1] - a[1]);
 
-  // BAGIAN YANG DIPERBAIKI ADA DI BAWAH INI
   new Chart('catItemChart', {
     type: 'bar',
     data: {
@@ -97,18 +95,22 @@ function renderCatCharts(data) {
           maxBarThickness: 75 
       }]
     },
-    // Opsi 'responsive' dan 'maintainAspectRatio' sudah ada di dalam darkChartOptions
     options: darkChartOptions, 
   });
   
   const dailyUsage = new Map();
-  data.forEach(item => dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty));
+  // --- PERBAIKAN ZONA WAKTU (1/2): Kelompokkan data berdasarkan tanggal lokal ---
+  data.forEach(item => {
+    const localDate = new Date(item.tanggal).toLocaleDateString('fr-CA'); // Format YYYY-MM-DD
+    dailyUsage.set(localDate, (dailyUsage.get(localDate) || 0) + item.qty);
+  });
   const sortedDaily = new Map([...dailyUsage.entries()].sort());
 
   new Chart('catDailyChart', {
     type: 'line',
     data: {
-      labels: Array.from(sortedDaily.keys()).map(d => new Date(d).getDate()),
+      // --- PERBAIKAN ZONA WAKTU (2/2): Ambil angka tanggal dari tanggal lokal ---
+      labels: Array.from(sortedDaily.keys()).map(d => d.split('-')[2].replace(/^0+/, '')), // 'YYYY-MM-DD' -> 'DD'
       datasets: [{ label: 'Total (Liter)', data: Array.from(sortedDaily.values()), borderColor: '#e94560', tension: 0.3 }]
     },
     options: darkChartOptions
@@ -131,13 +133,18 @@ function renderThinnerCharts(data) {
   });
 
   const dailyUsage = new Map();
-  data.forEach(item => dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty));
+  // --- PERBAIKAN ZONA WAKTU (1/2): Kelompokkan data berdasarkan tanggal lokal ---
+  data.forEach(item => {
+    const localDate = new Date(item.tanggal).toLocaleDateString('fr-CA'); // Format YYYY-MM-DD
+    dailyUsage.set(localDate, (dailyUsage.get(localDate) || 0) + item.qty);
+  });
   const sortedDaily = new Map([...dailyUsage.entries()].sort());
 
   new Chart('thinnerDailyChart', {
     type: 'line',
     data: {
-      labels: Array.from(sortedDaily.keys()).map(d => new Date(d).getDate()),
+      // --- PERBAIKAN ZONA WAKTU (2/2): Ambil angka tanggal dari tanggal lokal ---
+      labels: Array.from(sortedDaily.keys()).map(d => d.split('-')[2].replace(/^0+/, '')), // 'YYYY-MM-DD' -> 'DD'
       datasets: [{ label: 'Total (Liter)', data: Array.from(sortedDaily.values()), borderColor: '#0f3460', tension: 0.3 }]
     },
     options: darkChartOptions
@@ -148,13 +155,18 @@ function renderThinnerCharts(data) {
 function renderAeroxChart(data) {
   if (!data) return;
   const dailyUsage = new Map();
-  data.forEach(item => dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty));
+  // --- PERBAIKAN ZONA WAKTU (1/2): Kelompokkan data berdasarkan tanggal lokal ---
+  data.forEach(item => {
+    const localDate = new Date(item.tanggal).toLocaleDateString('fr-CA'); // Format YYYY-MM-DD
+    dailyUsage.set(localDate, (dailyUsage.get(localDate) || 0) + item.qty);
+  });
   const sortedDaily = new Map([...dailyUsage.entries()].sort());
 
   new Chart('aeroxDailyChart', {
     type: 'bar',
     data: {
-      labels: Array.from(sortedDaily.keys()).map(d => new Date(d).getDate()),
+      // --- PERBAIKAN ZONA WAKTU (2/2): Ambil angka tanggal dari tanggal lokal ---
+      labels: Array.from(sortedDaily.keys()).map(d => d.split('-')[2].replace(/^0+/, '')), // 'YYYY-MM-DD' -> 'DD'
       datasets: [{ label: 'Total (Pcs)', data: Array.from(sortedDaily.values()), backgroundColor: '#53a8b6' }]
     },
     options: darkChartOptions
@@ -165,13 +177,18 @@ function renderAeroxChart(data) {
 function renderPartJatuhChart(data) {
   if (!data) return;
   const dailyUsage = new Map();
-  data.forEach(item => dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty));
+  // --- PERBAIKAN ZONA WAKTU (1/2): Kelompokkan data berdasarkan tanggal lokal ---
+  data.forEach(item => {
+    const localDate = new Date(item.tanggal).toLocaleDateString('fr-CA'); // Format YYYY-MM-DD
+    dailyUsage.set(localDate, (dailyUsage.get(localDate) || 0) + item.qty);
+  });
   const sortedDaily = new Map([...dailyUsage.entries()].sort());
 
   new Chart('partJatuhDailyChart', {
     type: 'bar',
     data: {
-      labels: Array.from(sortedDaily.keys()).map(d => new Date(d).getDate()),
+      // --- PERBAIKAN ZONA WAKTU (2/2): Ambil angka tanggal dari tanggal lokal ---
+      labels: Array.from(sortedDaily.keys()).map(d => d.split('-')[2].replace(/^0+/, '')), // 'YYYY-MM-DD' -> 'DD'
       datasets: [{ label: 'Total (Qty)', data: Array.from(sortedDaily.values()), backgroundColor: '#5c5470' }]
     },
     options: darkChartOptions
@@ -242,10 +259,10 @@ function renderPartPerLeaderChart(data) {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'right', // Pindahkan legenda ke kanan agar donat lebih center
+                position: 'right',
                 labels: { color: '#e0e0e0' }
             },
-            datalabels: { // Tambahkan label data di dalam donat
+            datalabels: {
                 color: '#fff',
                 font: { weight: 'bold' },
                 formatter: (value, context) => {
@@ -259,14 +276,20 @@ function renderPartPerLeaderChart(data) {
   });
 }
 function renderAnalisisCatChart(data) {
+  console.log(data);
   if (!data) return;
   const dailyUsage = new Map();
-  data.forEach(item => dailyUsage.set(item.tanggal, (dailyUsage.get(item.tanggal) || 0) + item.qty));
+  // --- PERBAIKAN ZONA WAKTU (1/2): Kelompokkan data berdasarkan tanggal lokal ---
+  data.forEach(item => {
+    const localDate = new Date(item.tanggal).toLocaleDateString('fr-CA'); // Format YYYY-MM-DD
+    dailyUsage.set(localDate, (dailyUsage.get(localDate) || 0) + item.qty);
+  });
   const sortedDaily = new Map([...dailyUsage.entries()].sort());
 
   new Chart('chartAnalisisCat', {
     data: {
-      labels: Array.from(sortedDaily.keys()).map(d => new Date(d).getDate()),
+      // --- PERBAIKAN ZONA WAKTU (2/2): Ambil angka tanggal dari tanggal lokal ---
+      labels: Array.from(sortedDaily.keys()).map(d => d.split('-')[2].replace(/^0+/, '')), // 'YYYY-MM-DD' -> 'DD'
       datasets: [
         { 
           type: 'line', 
@@ -275,7 +298,6 @@ function renderAnalisisCatChart(data) {
           borderColor: '#ffa600', 
           fill: false, 
           tension: 0.3,
-          // === TAMBAHAN: Nonaktifkan label untuk garis ===
           datalabels: {
               display: false
           }
@@ -285,7 +307,6 @@ function renderAnalisisCatChart(data) {
           label: 'Total (Bar)', 
           data: Array.from(sortedDaily.values()), 
           backgroundColor: '#3a86ff' 
-          // Label untuk bar akan otomatis tampil dari pengaturan default
         }
       ]
     },
