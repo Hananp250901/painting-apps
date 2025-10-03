@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Produksi</title>
+    <style>
+        /* CSS tetap sama */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+        h1 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); background-color: #ffffff; }
+        th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; }
+        thead { background-color: #34495e; color: #ffffff; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        tr:hover { background-color: #e2e8f0; }
+
+        /* Style untuk tombol paginasi */
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background-color: #34495e;
+            color: white;
+            cursor: pointer;
+            margin: 0 5px;
+            border-radius: 4px;
+        }
+        .pagination button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .pagination span {
+            margin: 0 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Laporan Produksi Wuster</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tanggal</th>
+                <th>Part Number</th>
+                <th>Nama Part</th>
+                <th>Qty</th>
+                <th>CC per Pcs</th>
+                <th>Total Pemakaian</th>
+                <th>Hasil Akhir</th>
+            </tr>
+        </thead>
+        <tbody id="data-produksi">
+            <tr><td colspan="7" style="text-align: center;">Memuat data...</td></tr>
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button id="btn-prev" disabled>Sebelumnya</button>
+        <span>Halaman <span id="page-num">1</span></span>
+        <button id="btn-next">Berikutnya</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    // Konfigurasi Supabase Anda
+    const supabaseUrl = 'https://fbfvhcwisvlyodwvmpqg.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiZnZoY3dpc3ZseW9kd3ZtcHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MTQ2MzQsImV4cCI6MjA3MjM5MDYzNH0.mbn9B1xEr_8kmC2LOP5Jv5O7AEIK7Fa1gxrqJ91WNx4';
+    
+    // INI ADALAH BARIS YANG DIPERBAIKI
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Referensi elemen HTML
+    const tableBody = document.getElementById('data-produksi');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const pageNumSpan = document.getElementById('page-num');
+
+    // State Paginasi
+    let currentPage = 1;
+    const itemsPerPage = 20;
+
+    // Fungsi utama untuk mengambil dan menampilkan data
+    async function ambilData(halaman) {
+        const from = (halaman - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+
+        const { data, error } = await supabase
+            .from('hasil_produksi_wuster')
+            .select('*')
+            .order('tanggal', { ascending: false })
+            .range(from, to);
+
+        if (error) {
+            console.error('Error mengambil data:', error);
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Gagal memuat data: ${error.message}</td></tr>`;
+            return;
+        }
+
+        tableBody.innerHTML = '';
+        
+        if (data && data.length > 0) {
+            data.forEach(item => {
+                const barisHtml = `
+                    <tr>
+                        <td>${item.tanggal}</td>
+                        <td>${item.part_number}</td>
+                        <td>${item.nama_part}</td>
+                        <td>${item.qty}</td>
+                        <td>${item.cc_pcs}</td>
+                        <td>${item.total_pemakaian}</td>
+                        <td>${item.hasil_akhir}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += barisHtml;
+            });
+        } else {
+             tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center;">Tidak ada data di halaman ini.</td></tr>`;
+        }
+
+        pageNumSpan.textContent = halaman;
+        btnPrev.disabled = (halaman === 1);
+        btnNext.disabled = (data.length < itemsPerPage);
+    }
+
+    // Event listener untuk tombol
+    btnPrev.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            ambilData(currentPage);
+        }
+    });
+
+    btnNext.addEventListener('click', () => {
+        currentPage++;
+        ambilData(currentPage);
+    });
+
+    // Panggil fungsi untuk memuat data halaman pertama
+    ambilData(currentPage);
+</script>
+</body>
+</html>
